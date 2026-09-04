@@ -1,0 +1,15 @@
+# Core ML & Deep Learning Pipeline (EfficientNetV2B0, CIFAR-100)
+tensorflow>=2.15.0
+numpy>=1.24.0
+pillow>=10.0.0
+matplotlib>=3.7.0
+
+# Interactive Jupyter Notebook Support
+jupyter>=1.0.0
+notebook>=7.0.0
+ipywidgets>=8.0.0
+
+# Inference Backend API
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6

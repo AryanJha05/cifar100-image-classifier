@@ -1,10 +1,12 @@
 /**
- * CIFAR-100 Image Classifier - Main Application Logic
- * Implements interactive workbench states, file upload/preview,
- * telemetry visualizations, sample presets, and taxonomy search.
+ * CIFAR-100 Image Classifier - Main Frontend Application Logic
+ * Communicates with FastAPI backend (/predict & /health), handles file uploads,
+ * manages responsive UI states, and renders actual model prediction telemetry.
  */
 
-// Sample image presets for interactive demonstration
+const API_BASE_URL = 'http://localhost:8000';
+
+// Preset sample images for quick evaluation
 const SAMPLE_PRESETS = {
   apple: {
     name: 'input_apple_01.png',
@@ -14,7 +16,7 @@ const SAMPLE_PRESETS = {
     confidence: 94.28,
     inferenceTime: '18ms',
     loss: '0.124',
-    roi: '(4, 4, 28, 28)',
+    roi: '(12, 12, 84, 84)',
     top5: [
       { rank: '01', name: 'Apple', prob: '94.28%', width: '94.28%' },
       { rank: '02', name: 'Orange', prob: '2.41%', width: '14%' },
@@ -32,7 +34,7 @@ const SAMPLE_PRESETS = {
     confidence: 89.65,
     inferenceTime: '19ms',
     loss: '0.168',
-    roi: '(2, 6, 30, 26)',
+    roi: '(8, 14, 88, 80)',
     top5: [
       { rank: '01', name: 'Dolphin', prob: '89.65%', width: '89.65%' },
       { rank: '02', name: 'Whale', prob: '6.12%', width: '22%' },
@@ -50,7 +52,7 @@ const SAMPLE_PRESETS = {
     confidence: 96.12,
     inferenceTime: '17ms',
     loss: '0.089',
-    roi: '(3, 5, 29, 27)',
+    roi: '(10, 16, 86, 82)',
     top5: [
       { rank: '01', name: 'Motorcycle', prob: '96.12%', width: '96.12%' },
       { rank: '02', name: 'Bicycle', prob: '2.15%', width: '12%' },
@@ -62,6 +64,7 @@ const SAMPLE_PRESETS = {
   }
 };
 
+let currentSelectedFile = null;
 let currentPreset = SAMPLE_PRESETS.apple;
 let currentState = 'result';
 let isGridActive = false;
@@ -73,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* --------------------------------------------------------------------------
-   Mobile Navigation Toggle
+   Mobile Navigation
    -------------------------------------------------------------------------- */
 function initMobileMenu() {
   const toggleBtn = document.getElementById('mobile-nav-toggle-btn');
@@ -93,7 +96,7 @@ function initMobileMenu() {
 }
 
 /* --------------------------------------------------------------------------
-   Classifier Viewport & State Machine
+   Classifier Viewport & Drag-and-Drop
    -------------------------------------------------------------------------- */
 function initClassifierEvents() {
   const dropzone = document.getElementById('view-empty');
@@ -133,9 +136,12 @@ function initClassifierEvents() {
 
 function handleUploadedFile(file) {
   if (!file.type.startsWith('image/')) {
+    showErrorMessage("Unsupported file format. Please upload a PNG, JPG, or JPEG image.");
     setClassifierState('error');
     return;
   }
+
+  currentSelectedFile = file;
 
   const reader = new FileReader();
   reader.onload = function(evt) {
@@ -149,7 +155,7 @@ function handleUploadedFile(file) {
     }
 
     const badge = document.getElementById('left-header-badge');
-    if (badge) badge.textContent = '32 × 32 px (Unanalyzed)';
+    if (badge) badge.textContent = '96 × 96 px (Ready)';
 
     setClassifierState('selected');
   };
@@ -159,7 +165,7 @@ function handleUploadedFile(file) {
 function setClassifierState(state) {
   currentState = state;
 
-  // Update tabs
+  // Update tab buttons
   document.querySelectorAll('.state-tab-btn').forEach(btn => {
     btn.classList.remove('active');
   });
@@ -174,7 +180,7 @@ function setClassifierState(state) {
   const tensorBox = document.getElementById('tensor-detection-box');
   const headerBadge = document.getElementById('left-header-badge');
 
-  // Panels
+  // Hide all right panels
   ['result', 'selected', 'loading', 'empty', 'error'].forEach(p => {
     const el = document.getElementById(`panel-${p}`);
     if (el) el.classList.add('hidden');
@@ -192,32 +198,39 @@ function setClassifierState(state) {
     viewEmpty.classList.add('hidden');
     viewImage.classList.add('hidden');
     viewError.classList.remove('hidden');
-    headerBadge.textContent = 'Stream Error';
+    headerBadge.textContent = 'Inference Error';
   } else if (state === 'loading') {
     viewEmpty.classList.add('hidden');
     viewImage.classList.remove('hidden');
     viewError.classList.add('hidden');
     scanningLaser.classList.remove('hidden');
     tensorBox.classList.add('hidden');
-    headerBadge.textContent = 'Evaluating Tensor...';
+    headerBadge.textContent = 'Evaluating Tensor (96×96)...';
   } else if (state === 'selected') {
     viewEmpty.classList.add('hidden');
     viewImage.classList.remove('hidden');
     viewError.classList.add('hidden');
     scanningLaser.classList.add('hidden');
     tensorBox.classList.add('hidden');
-    headerBadge.textContent = '32 × 32 px (Ready)';
+    headerBadge.textContent = '96 × 96 px (Ready)';
   } else if (state === 'result') {
     viewEmpty.classList.add('hidden');
     viewImage.classList.remove('hidden');
     viewError.classList.add('hidden');
     scanningLaser.classList.add('hidden');
     tensorBox.classList.remove('hidden');
-    headerBadge.textContent = '32 × 32 px (Rescaled)';
-    renderPredictionData(currentPreset);
+    headerBadge.textContent = '96 × 96 px (Classified)';
   }
 }
 
+function showErrorMessage(msg) {
+  const errDesc = document.getElementById('error-state-desc');
+  if (errDesc) errDesc.textContent = msg;
+}
+
+/* --------------------------------------------------------------------------
+   Render Telemetry & Prediction Data
+   -------------------------------------------------------------------------- */
 function renderPredictionData(data) {
   const nameEl = document.getElementById('result-class-name');
   if (nameEl) nameEl.textContent = data.predictedClass;
@@ -226,7 +239,7 @@ function renderPredictionData(data) {
   if (confEl) confEl.textContent = `${data.confidence}% Confidence`;
 
   const radialPct = document.getElementById('radial-pct-text');
-  if (radialPct) radialPct.textContent = `${data.confidence.toFixed(1)}%`;
+  if (radialPct) radialPct.textContent = `${Number(data.confidence).toFixed(1)}%`;
 
   const gauge = document.getElementById('gauge-circle-val');
   if (gauge) gauge.setAttribute('stroke-dasharray', `${data.confidence}, 100`);
@@ -235,14 +248,14 @@ function renderPredictionData(data) {
   if (tag) tag.textContent = `cifar_class: ${data.predictedClass.toLowerCase()} [${(data.confidence/100).toFixed(4)}]`;
 
   const roi = document.getElementById('tensor-roi-tag');
-  if (roi) roi.textContent = `ROI: ${data.roi}`;
+  if (roi) roi.textContent = `ROI: ${data.roi || '(12, 12, 84, 84)'}`;
 
   const metaFooter = document.getElementById('result-meta-footer');
   if (metaFooter) {
     metaFooter.innerHTML = `
-      <span>Superclass: ${data.superclass}</span>
-      <span>Loss: ${data.loss}</span>
-      <span>Arch: ConvNet-v2.1</span>
+      <span>Model: EfficientNetV2B0</span>
+      <span>Latency: ${data.inferenceTime || '18ms'}</span>
+      <span>Input: 96×96×3</span>
     `;
   }
 
@@ -261,6 +274,68 @@ function renderPredictionData(data) {
         </div>
       </div>
     `).join('');
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Inference Execution: Connects to FastAPI Backend /predict
+   -------------------------------------------------------------------------- */
+async function executePrediction() {
+  setClassifierState('loading');
+
+  if (currentSelectedFile) {
+    const formData = new FormData();
+    formData.append('file', currentSelectedFile);
+
+    const startTime = performance.now();
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/predict`, {
+        method: 'POST',
+        body: formData
+      });
+
+      const elapsedMs = Math.round(performance.now() - startTime);
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({ detail: 'Prediction failed' }));
+        throw new Error(errData.detail || `Server returned ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      // Format backend response to match UI telemetry
+      const formattedData = {
+        name: currentSelectedFile.name,
+        size: `${(currentSelectedFile.size / 1024).toFixed(1)} KB`,
+        predictedClass: result.predicted_class,
+        confidence: result.confidence,
+        inferenceTime: `${elapsedMs}ms`,
+        roi: '(12, 12, 84, 84)',
+        top5: result.top_predictions.map((p, idx) => ({
+          rank: `0${idx + 1}`,
+          name: p.class_name,
+          prob: `${p.confidence.toFixed(2)}%`,
+          width: `${p.confidence}%`
+        }))
+      };
+
+      currentPreset = formattedData;
+      renderPredictionData(formattedData);
+      setClassifierState('result');
+
+    } catch (err) {
+      console.warn("Backend API not reachable or model not yet loaded:", err.message);
+      // If backend returns model not found or connection error, inform user clearly
+      showErrorMessage(err.message || "Failed to reach inference backend.");
+      setClassifierState('error');
+    }
+  } else {
+    // Fallback simulation for preset demonstration
+    setTimeout(() => {
+      renderPredictionData(currentPreset);
+      setClassifierState('result');
+    }, 1000);
   }
 }
 
@@ -285,6 +360,7 @@ function togglePixelGrid() {
 }
 
 function loadSamplePreset(presetKey) {
+  currentSelectedFile = null;
   const sample = SAMPLE_PRESETS[presetKey] || SAMPLE_PRESETS.apple;
   currentPreset = sample;
 
@@ -296,6 +372,7 @@ function loadSamplePreset(presetKey) {
     meta.innerHTML = `<span>${sample.name}</span><span>·</span><span>${sample.size}</span>`;
   }
 
+  renderPredictionData(sample);
   setClassifierState('result');
 }
 
@@ -303,15 +380,8 @@ function resetSampleImage() {
   loadSamplePreset('apple');
 }
 
-function simulateInference() {
-  setClassifierState('loading');
-  setTimeout(() => {
-    setClassifierState('result');
-  }, 1200);
-}
-
 /* --------------------------------------------------------------------------
-   Taxonomy Search Filter
+   Taxonomy Search & Filter
    -------------------------------------------------------------------------- */
 function filterClassBadges() {
   const query = (document.getElementById('class-search-input')?.value || '').toLowerCase().trim();

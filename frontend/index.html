@@ -23,7 +23,7 @@
           </svg>
         </div>
         <span class="brand-text">CIFAR-100 Classifier</span>
-        <span class="brand-tag">CNN v1.4</span>
+        <span class="brand-tag">EfficientNetV2B0</span>
       </a>
 
       <nav class="desktop-nav" aria-label="Main Navigation">
@@ -71,11 +71,11 @@
           <div class="hero-content">
             <div class="hero-badge">
               <span class="status-dot status-dot-emerald"></span>
-              <span>INFERENCE ENGINE · CIFAR-100 DENSE CONVNET</span>
+              <span>INFERENCE ENGINE · EFFICIENTNETV2B0 CNN</span>
             </div>
             <h1 class="hero-title">See what the network sees.</h1>
             <p class="hero-desc">
-              Upload an image and let an optimized convolutional neural network inspect its spatial activations. Inspect categorical distributions, confidence margins, and top alternative classifications in real time.
+              Upload an image and let an optimized deep neural network inspect its spatial activations. Inspect categorical distributions, confidence margins, and top alternative classifications in real time.
             </p>
             <div class="hero-actions">
               <a href="#classifier" class="btn btn-primary btn-lg">
@@ -101,18 +101,18 @@
               </div>
               <div class="metric-divider"></div>
               <div class="metric-item">
-                <span class="metric-val">32×32</span>
+                <span class="metric-val">96×96</span>
                 <span class="metric-lbl">Input Matrix</span>
               </div>
               <div class="metric-divider"></div>
               <div class="metric-item">
                 <span class="metric-val">18ms</span>
-                <span class="metric-lbl">Mean Inference</span>
+                <span class="metric-lbl">Mean Latency</span>
               </div>
             </div>
           </div>
 
-          <!-- Feedforward Mini Pipeline Preview -->
+          <!-- Feedforward Tensor Pipeline Preview -->
           <div class="pipeline-flow-card">
             <div class="card-header">
               <div class="card-header-title">
@@ -127,45 +127,45 @@
                   <div class="flow-num">01</div>
                   <div>
                     <div class="flow-name">Input Matrix</div>
-                    <div class="flow-sub">RGB [0.0, 1.0] normalized</div>
+                    <div class="flow-sub">RGB [0-255] float32 array</div>
                   </div>
                 </div>
-                <span class="flow-dim">32 × 32 × 3</span>
+                <span class="flow-dim">96 × 96 × 3</span>
               </div>
               <div class="flow-stage-row">
                 <div class="flow-stage-left">
                   <div class="flow-num">02</div>
                   <div>
-                    <div class="flow-name">Conv2D + ReLU</div>
-                    <div class="flow-sub">16 Filters (3×3 receptive)</div>
+                    <div class="flow-name">Data Augmentation</div>
+                    <div class="flow-sub">Flip, Rotation, Zoom, Translation</div>
                   </div>
                 </div>
-                <span class="flow-dim">30 × 30 × 16</span>
+                <span class="flow-dim">96 × 96 × 3</span>
               </div>
               <div class="flow-stage-row">
                 <div class="flow-stage-left">
                   <div class="flow-num">03</div>
                   <div>
-                    <div class="flow-name">MaxPool2D</div>
-                    <div class="flow-sub">Spatial stride 2 × 2</div>
+                    <div class="flow-name">EfficientNetV2B0</div>
+                    <div class="flow-sub">ImageNet Transfer Backbone</div>
                   </div>
                 </div>
-                <span class="flow-dim">15 × 15 × 16</span>
+                <span class="flow-dim">3 × 3 × 1280</span>
               </div>
               <div class="flow-stage-row highlight-dark">
                 <div class="flow-stage-left">
                   <div class="flow-num">04</div>
                   <div>
                     <div class="flow-name">Dense Softmax</div>
-                    <div class="flow-sub">100-way categorical</div>
+                    <div class="flow-sub">GAP + BN + Dense(512) + Drop(0.4)</div>
                   </div>
                 </div>
-                <span class="flow-dim">p = 0.9428</span>
+                <span class="flow-dim">100-way</span>
               </div>
             </div>
             <div class="card-footer">
-              <span>Loss: Categorical Cross-Entropy</span>
-              <span>Kernel: He_Normal</span>
+              <span>Loss: Sparse Categorical Cross-Entropy</span>
+              <span>Optimizer: Adam</span>
             </div>
           </div>
         </div>
@@ -178,7 +178,7 @@
             <span class="section-eyebrow">IMAGE CLASSIFICATION WORKBENCH</span>
             <h2 class="section-title">Upload an image to begin.</h2>
             <p class="section-desc">
-              The CNN analyzes visual features and predicts one of 100 CIFAR-100 classes.
+              The model analyzes visual features and predicts one of 100 CIFAR-100 classes.
             </p>
           </div>
 
@@ -216,7 +216,7 @@
                   </svg>
                   <span>Source Matrix</span>
                 </span>
-                <span class="badge badge-neutral" id="left-header-badge">32 × 32 px (Rescaled)</span>
+                <span class="badge badge-neutral" id="left-header-badge">96 × 96 px (Rescaled)</span>
               </div>
 
               <!-- VIEWPORT BOX -->
@@ -224,7 +224,7 @@
                 
                 <!-- EMPTY DROPZONE -->
                 <div class="dropzone-view hidden" id="view-empty" onclick="triggerFileSelect()">
-                  <input type="file" id="file-input-el" accept="image/png,image/jpeg,image/webp" class="hidden">
+                  <input type="file" id="file-input-el" accept="image/png,image/jpeg,image/jpg,image/webp" class="hidden">
                   <div class="dropzone-icon">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -233,7 +233,7 @@
                     </svg>
                   </div>
                   <h3 class="dropzone-title">Drop image to classify</h3>
-                  <p class="dropzone-subtitle">PNG, JPG or WEBP up to 10MB</p>
+                  <p class="dropzone-subtitle">PNG, JPG or JPEG up to 10MB</p>
                   <button type="button" class="btn btn-primary btn-sm">Select File</button>
                 </div>
 
@@ -246,7 +246,7 @@
 
                   <div class="tensor-box" id="tensor-detection-box">
                     <div class="tensor-tag-top" id="tensor-class-tag">cifar_class: apple [0.9428]</div>
-                    <div class="tensor-tag-bottom" id="tensor-roi-tag">ROI: (4, 4, 28, 28)</div>
+                    <div class="tensor-tag-bottom" id="tensor-roi-tag">ROI: (12, 12, 84, 84)</div>
                   </div>
 
                   <div class="preview-canvas-box">
@@ -265,8 +265,10 @@
                       <line x1="12" y1="16" x2="12.01" y2="16"></line>
                     </svg>
                   </div>
-                  <h3 class="state-title">Input Matrix Failure</h3>
-                  <p class="state-desc">Tensor channel depth mismatch. Ensure input has 3 valid RGB color dimensions.</p>
+                  <h3 class="state-title">Inference Notice</h3>
+                  <p class="state-desc" id="error-state-desc">
+                    Unable to process image. Ensure backend is running with best_model.keras in backend/model/.
+                  </p>
                 </div>
 
               </div>
@@ -283,11 +285,13 @@
                     </svg>
                     <span id="grid-toggle-text">Grid: Off</span>
                   </button>
-                  <button type="button" class="btn btn-secondary btn-sm" onclick="resetSampleImage()">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="triggerFileSelect()">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"></path>
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="17 8 12 3 7 8"></polyline>
+                      <line x1="12" y1="3" x2="12" y2="15"></line>
                     </svg>
-                    <span>Reset Sample</span>
+                    <span>Upload New</span>
                   </button>
                 </div>
                 <div class="viewport-meta" id="file-meta-strip">
@@ -299,7 +303,7 @@
 
               <!-- Presets -->
               <div class="sample-presets-strip">
-                <span class="font-mono" style="font-size: 11px; color: var(--text-tertiary);">Presets:</span>
+                <span class="font-mono" style="font-size: 11px; color: var(--text-tertiary);">Sample Presets:</span>
                 <button type="button" class="sample-chip-btn" onclick="loadSamplePreset('apple')">🍎 Apple</button>
                 <button type="button" class="sample-chip-btn" onclick="loadSamplePreset('dolphin')">🐬 Dolphin</button>
                 <button type="button" class="sample-chip-btn" onclick="loadSamplePreset('motorcycle')">🏍️ Motorcycle</button>
@@ -315,7 +319,7 @@
             <div class="flex" id="panel-result" style="flex-direction: column; height: 100%; justify-content: space-between;">
               <div>
                 <div class="card-header">
-                  <span class="badge badge-neutral">INFERENCE COMPLETE · 18ms</span>
+                  <span class="badge badge-neutral">INFERENCE COMPLETE</span>
                   <span class="badge badge-success">
                     <span class="status-dot status-dot-emerald"></span>
                     <span>Top-1 Confirmed</span>
@@ -343,7 +347,7 @@
                     </svg>
                     <div class="gauge-center-text">
                       <span class="gauge-pct" id="radial-pct-text">94.3%</span>
-                      <span class="gauge-lbl">p-val</span>
+                      <span class="gauge-lbl">confidence</span>
                     </div>
                   </div>
                 </div>
@@ -359,9 +363,9 @@
               </div>
 
               <div class="card-footer" id="result-meta-footer">
-                <span>Class ID: #00 (Fruit & Veg)</span>
-                <span>Loss: 0.124</span>
-                <span>Arch: ConvNet-v2.1</span>
+                <span>Model: EfficientNetV2B0</span>
+                <span>Latency: 18ms</span>
+                <span>Input: 96×96×3</span>
               </div>
             </div>
 
@@ -373,15 +377,15 @@
                 </svg>
               </div>
               <span class="section-eyebrow">TENSOR READY</span>
-              <h3 class="state-title">Image Matrix Loaded</h3>
+              <h3 class="state-title">Image Loaded (96 × 96)</h3>
               <p class="state-desc">
-                Normalized to float32 spatial tensor (32 × 32 × 3). Ready for convolution forward pass.
+                Image rescaled and converted to float32 tensor. Ready for CNN inference pass.
               </p>
-              <button type="button" class="btn btn-primary btn-lg" onclick="simulateInference()">
+              <button type="button" class="btn btn-primary btn-lg" onclick="executePrediction()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polygon points="5 3 19 12 5 21 5 3"></polygon>
                 </svg>
-                <span>Run Classification</span>
+                <span>Predict Image</span>
               </button>
             </div>
 
@@ -395,16 +399,16 @@
               <span class="section-eyebrow">INFERENCE PIPELINE</span>
               <h3 class="state-title">Analyzing tensor...</h3>
               <p class="state-desc">
-                Extracting local edge descriptors and computing dense categorical activations.
+                Running forward pass through EfficientNetV2B0 and computing dense softmax activations.
               </p>
               <div class="loading-steps-box">
                 <div class="loading-step-item complete">
                   <span class="status-dot status-dot-emerald"></span>
-                  <span>01. Tensor scaling (32×32×3)</span>
+                  <span>01. Tensor scaling (96×96×3)</span>
                 </div>
                 <div class="loading-step-item active">
                   <span class="status-dot status-dot-zinc"></span>
-                  <span>02. Feature maps (16 filters)</span>
+                  <span>02. Feature maps (EfficientNetV2B0)</span>
                 </div>
                 <div class="loading-step-item">
                   <span class="status-dot status-dot-zinc"></span>
@@ -424,7 +428,7 @@
               </div>
               <h3 class="state-title">Awaiting Input Image</h3>
               <p class="state-desc">
-                Upload or drag a photo on the left to see feedforward classification and probability telemetry.
+                Upload or drop an image on the left to see feedforward classification and probability telemetry.
               </p>
               <button type="button" class="btn btn-secondary btn-sm" onclick="setClassifierState('result')">
                 Load Sample Apple Matrix →
@@ -440,13 +444,13 @@
                   <line x1="12" y1="16" x2="12.01" y2="16"></line>
                 </svg>
               </div>
-              <span class="section-eyebrow" style="color: var(--error);">EXECUTION ERROR</span>
-              <h3 class="state-title">Unable to process tensor</h3>
-              <p class="state-desc">
-                The image dimensions or color profiles could not be decoded. Please retry with another PNG or JPG.
+              <span class="section-eyebrow" style="color: var(--error);">EXECUTION NOTICE</span>
+              <h3 class="state-title">Inference Execution</h3>
+              <p class="state-desc" id="error-state-desc-panel">
+                To test live inference, ensure backend is running with best_model.keras in backend/model/.
               </p>
               <button type="button" class="btn btn-secondary btn-sm" onclick="setClassifierState('result')">
-                Try Again
+                Reset to Sample
               </button>
             </div>
 
@@ -461,7 +465,7 @@
           <span class="section-eyebrow">SPECIFICATIONS</span>
           <h2 class="section-title">Model at a glance.</h2>
           <p class="section-desc">
-            Lightweight convolutional neural network optimized for fast image classification.
+            Deep convolutional neural network based on EfficientNetV2B0 transfer learning fine-tuned on CIFAR-100.
           </p>
         </div>
 
@@ -474,24 +478,24 @@
           </div>
           <div class="stat-card">
             <span class="stat-header">INPUT MATRIX</span>
-            <div class="stat-value">32²</div>
-            <div class="stat-label">32 × 32 Px</div>
-            <div class="stat-subtext">Standard spatial grid</div>
+            <div class="stat-value">96²</div>
+            <div class="stat-label">96 × 96 Px</div>
+            <div class="stat-subtext">Optimized spatial tensor</div>
           </div>
           <div class="stat-card">
             <span class="stat-header">IMAGE FORMAT</span>
             <div class="stat-value">RGB</div>
             <div class="stat-label">3 Channels</div>
-            <div class="stat-subtext">Normalized [0.0, 1.0]</div>
+            <div class="stat-subtext">Normalized float32</div>
           </div>
           <div class="stat-card">
             <span class="stat-header">TOPOLOGY</span>
             <div class="stat-value">CNN</div>
-            <div class="stat-label">Deep ConvNet</div>
-            <div class="stat-subtext">Conv2D + MaxPool + Dense</div>
+            <div class="stat-label">EfficientNetV2B0</div>
+            <div class="stat-subtext">GAP + BN + Dense(512)</div>
           </div>
           <div class="stat-card">
-            <span class="stat-header">TRAINING SET</span>
+            <span class="stat-header">DATASET</span>
             <div class="stat-value">60k</div>
             <div class="stat-label">Images Total</div>
             <div class="stat-subtext">50k train / 10k test</div>
@@ -505,7 +509,7 @@
           <span class="section-eyebrow">TECHNICAL PIPELINE</span>
           <h2 class="section-title">From pixels to prediction.</h2>
           <p class="section-desc">
-            A 4-stage convolutional pipeline transforming raw pixel matrices into probabilistic class distributions.
+            A 4-stage transfer learning pipeline transforming raw pixel matrices into probabilistic class distributions.
           </p>
         </div>
 
@@ -523,10 +527,10 @@
               </div>
               <h3 class="stage-title">Input Matrix</h3>
               <p class="stage-desc">
-                Receive a 32 × 32 RGB image and normalize pixel channels from uint8 integers [0-255] to float32 scales [0.0-1.0].
+                Receive an RGB image and resize to 96 × 96 spatial resolution with 3 color channels.
               </p>
             </div>
-            <div class="stage-badge-box">Shape: (1, 32, 32, 3)</div>
+            <div class="stage-badge-box">Shape: (1, 96, 96, 3)</div>
           </div>
 
           <!-- Stage 02 -->
@@ -539,12 +543,12 @@
                   <path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24"></path>
                 </svg>
               </div>
-              <h3 class="stage-title">Convolution</h3>
+              <h3 class="stage-title">Augmentation</h3>
               <p class="stage-desc">
-                Extract edges, textures, shapes and localized patterns using spatial 3×3 receptive field kernels with ReLU activations.
+                Random horizontal flip, rotation (15%), zoom (15%), and contrast adjustments during training.
               </p>
             </div>
-            <div class="stage-badge-box">Filter: Conv2D(32, 3×3)</div>
+            <div class="stage-badge-box">Layer: tf.keras.Sequential</div>
           </div>
 
           <!-- Stage 03 -->
@@ -558,12 +562,12 @@
                   <polyline points="2 12 12 17 22 12"></polyline>
                 </svg>
               </div>
-              <h3 class="stage-title">Feature Pooling</h3>
+              <h3 class="stage-title">Feature Extraction</h3>
               <p class="stage-desc">
-                Compress activations to build increasingly compact hierarchical representations while maintaining spatial invariance.
+                Pretrained EfficientNetV2B0 extracts hierarchical multi-scale visual representations.
               </p>
             </div>
-            <div class="stage-badge-box">Downsample: MaxPool2D(2×2)</div>
+            <div class="stage-badge-box">Backbone: EfficientNetV2B0</div>
           </div>
 
           <!-- Stage 04 -->
@@ -575,9 +579,9 @@
                   <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
                 </svg>
               </div>
-              <h3 class="stage-title">Classification</h3>
+              <h3 class="stage-title">Classification Head</h3>
               <p class="stage-desc">
-                Flattened dense layers compute softmax probabilities across all 100 fine categories, producing likelihood distributions.
+                GlobalAveragePooling2D followed by Dense(512) and Dense(100, softmax) classification.
               </p>
             </div>
             <div class="stage-badge-box">Dense(100, softmax)</div>
@@ -590,9 +594,9 @@
         <div class="card" style="padding: 32px;">
           <div style="max-width: 680px; margin-bottom: 24px;">
             <span class="section-eyebrow">FOUNDATIONAL THEORY</span>
-            <h2 class="section-title">Why use a Convolutional Neural Network?</h2>
+            <h2 class="section-title">Why use Transfer Learning with EfficientNet?</h2>
             <p class="section-desc">
-              Unlike standard feedforward multi-layer perceptrons that treat pixel arrays as flat 1D vectors, CNNs preserve 2D topological geometry through localized receptive fields and shared weight matrices.
+              EfficientNet uses compound coefficient scaling to uniformly scale depth, width, and resolution, capturing intricate visual patterns far beyond basic small-kernel ConvNets.
             </p>
           </div>
 
@@ -602,9 +606,9 @@
                 <div class="brand-logo-icon" style="margin-bottom: 12px;">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h3M20 7V4h-3M4 17v3h3M20 17v3h-3"></path></svg>
                 </div>
-                <h3 class="stage-title">Local Receptive Fields</h3>
+                <h3 class="stage-title">Pretrained Weights</h3>
                 <p class="stage-desc">
-                  Filters process nearby pixel neighborhoods directly, identifying local edges, gradients, and textures without spatial flattening.
+                  Leverages ImageNet representations to accelerate convergence on fine-grained categories.
                 </p>
               </div>
             </div>
@@ -614,9 +618,9 @@
                 <div class="brand-logo-icon" style="margin-bottom: 12px;">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"></line></svg>
                 </div>
-                <h3 class="stage-title">Weight Sharing</h3>
+                <h3 class="stage-title">Two-Stage Fine-Tuning</h3>
                 <p class="stage-desc">
-                  The identical filter weights scan across the entire grid, granting translation invariance and lowering parameter counts.
+                  Initial training freezes the base model (lr=1e-3); fine-tuning unfreezes layers with low lr (1e-5).
                 </p>
               </div>
             </div>
@@ -626,9 +630,9 @@
                 <div class="brand-logo-icon" style="margin-bottom: 12px;">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
                 </div>
-                <h3 class="stage-title">Hierarchical Features</h3>
+                <h3 class="stage-title">Regularization</h3>
                 <p class="stage-desc">
-                  Early layers capture primitive contours; intermediate layers compose textures; deeper layers resolve semantic classes.
+                  BatchNormalization, Dropout(0.4), and ReduceLROnPlateau prevent catastrophic overfitting.
                 </p>
               </div>
             </div>
@@ -789,16 +793,16 @@
               <span class="section-eyebrow">RESEARCH &amp; ARCHITECTURE</span>
               <h2 class="section-title" style="margin-top: 4px; margin-bottom: 12px;">Academic AI/ML Project</h2>
               <p class="research-text">
-                The CIFAR-100 Image Classifier demonstrates how convolutional neural network representations generalize across diverse visual categories under constrained spatial resolutions.
+                Trained using EfficientNetV2B0 with two-stage optimization (frozen feature extraction followed by low learning rate fine-tuning).
               </p>
               <div class="key-points-list">
                 <div class="key-point-item">
                   <span class="key-point-bullet"></span>
-                  <p><strong>Inference Ready:</strong> Clean asynchronous state architecture ready for integration with a FastAPI Python backend exposing Keras <code class="font-mono" style="font-size: 11px; background-color: var(--bg-surface-subtle); padding: 2px 6px; border-radius: 4px;">model.predict()</code> endpoints.</p>
+                  <p><strong>Inference Ready:</strong> Connected to FastAPI backend with <code class="font-mono" style="font-size: 11px; background-color: var(--bg-surface-subtle); padding: 2px 6px; border-radius: 4px;">POST /predict</code> for real-time inference.</p>
                 </div>
                 <div class="key-point-item">
                   <span class="key-point-bullet"></span>
-                  <p><strong>Data Augmentation:</strong> Trained using random spatial rotations, horizontal flips, and channel standardization to prevent catastrophic overfitting on low-resolution inputs.</p>
+                  <p><strong>Data Augmentation:</strong> Random horizontal flip, rotation (0.15), zoom (0.15), translation (0.1), and contrast (0.1).</p>
                 </div>
               </div>
             </div>
@@ -807,17 +811,17 @@
             <div style="background-color: var(--bg-canvas); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: var(--space-5);">
               <span class="section-eyebrow">ENGINEERED WITH</span>
               <div class="tech-tag-group">
-                <span class="tech-tag">TensorFlow</span>
+                <span class="tech-tag">EfficientNetV2B0</span>
+                <span class="tech-tag">TensorFlow 2.x</span>
                 <span class="tech-tag">Keras</span>
                 <span class="tech-tag">Python 3.10</span>
-                <span class="tech-tag">NumPy</span>
                 <span class="tech-tag">FastAPI</span>
                 <span class="tech-tag">CIFAR-100</span>
               </div>
               <div class="code-box">
-                <div class="comment"># CLI validation script</div>
-                <div class="command">$ python eval_cifar.py --weights best.h5</div>
-                <div class="output">Top-1 Acc: 78.4% · Top-5 Acc: 93.8%</div>
+                <div class="comment"># Model export contract</div>
+                <div class="command">model.save("best_model.keras")</div>
+                <div class="output">Target: backend/model/best_model.keras</div>
               </div>
             </div>
           </div>

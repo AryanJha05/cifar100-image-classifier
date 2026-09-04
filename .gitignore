@@ -38,6 +38,9 @@ wheels/
 *.swo
 .DS_Store
 
-# Large Model Files
+# Large Model Files & Datasets
 backend/model/*.keras
 backend/model/*.h5
+notebook/*.keras
+notebook/*.h5
+data/

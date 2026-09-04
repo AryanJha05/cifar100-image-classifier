@@ -39,6 +39,9 @@ ml/
 frontend/
 design/
 
+# Data & Datasets
+data/
+
 # IDEs & OS Files
 .vscode/
 .idea/
