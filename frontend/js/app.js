@@ -1,13 +1,13 @@
 /**
- * CIFAR-100 Image Classifier - Classifier Workbench Controller
- * Manages UI states, image uploads, previews, telemetry, and prediction pipeline.
- * Designed with a clean API adapter boundary for future FastAPI backend integration.
+ * CIFAR-100 Image Classifier - Main Application Logic
+ * Implements interactive workbench states, file upload/preview,
+ * telemetry visualizations, sample presets, and taxonomy search.
  */
 
-// Preset samples for quick demonstration
+// Sample image presets for interactive demonstration
 const SAMPLE_PRESETS = {
   apple: {
-    name: 'sample_apple.png',
+    name: 'input_apple_01.png',
     size: '142 KB',
     predictedClass: 'Apple',
     superclass: 'Fruit & Vegetables (Superclass #04)',
@@ -25,7 +25,7 @@ const SAMPLE_PRESETS = {
     src: "https://lh3.googleusercontent.com/aida/AEtjO1UxtM6UphbpOJFoBaSihrwsvDAF-cu3-z9plOHEtWz_Noapuxsb8wVM0Q4tv7YCw8J4zcD7pg_Av6sNH_1VZx2IDxAGgXi2JKJQANYu5pG0OFDJg_nUhW4jccTNe8MrvLy7OptqXza3ccNiOh8scLmQGOx9x5iUnCIXRl3UuAx63KTjPtfgx4J6wvgl2YjMTN9gvt70NDgLfANwibok3YEyUSuFe1SR9Lze9sr2iT41U_lJgWJ3k6gWJw"
   },
   dolphin: {
-    name: 'sample_dolphin.png',
+    name: 'input_dolphin_01.png',
     size: '118 KB',
     predictedClass: 'Dolphin',
     superclass: 'Aquatic Mammals (Superclass #01)',
@@ -43,7 +43,7 @@ const SAMPLE_PRESETS = {
     src: "https://images.unsplash.com/photo-1570481662006-a3a1374699e8?w=300&auto=format&fit=crop&q=80"
   },
   motorcycle: {
-    name: 'sample_motorcycle.png',
+    name: 'input_motorcycle_01.png',
     size: '156 KB',
     predictedClass: 'Motorcycle',
     superclass: 'Vehicles 1 (Superclass #18)',
@@ -62,20 +62,44 @@ const SAMPLE_PRESETS = {
   }
 };
 
-let currentActivePreset = SAMPLE_PRESETS.apple;
+let currentPreset = SAMPLE_PRESETS.apple;
 let currentState = 'result';
 let isGridActive = false;
 
 document.addEventListener('DOMContentLoaded', () => {
-  initClassifier();
+  initMobileMenu();
+  initClassifierEvents();
+  renderPredictionData(currentPreset);
 });
 
-function initClassifier() {
+/* --------------------------------------------------------------------------
+   Mobile Navigation Toggle
+   -------------------------------------------------------------------------- */
+function initMobileMenu() {
+  const toggleBtn = document.getElementById('mobile-nav-toggle-btn');
+  const drawer = document.getElementById('mobile-menu-drawer');
+
+  if (toggleBtn && drawer) {
+    toggleBtn.addEventListener('click', () => {
+      drawer.classList.toggle('open');
+    });
+
+    document.querySelectorAll('.mobile-nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        drawer.classList.remove('open');
+      });
+    });
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Classifier Viewport & State Machine
+   -------------------------------------------------------------------------- */
+function initClassifierEvents() {
   const dropzone = document.getElementById('view-empty');
   const fileInput = document.getElementById('file-input-el');
 
   if (dropzone && fileInput) {
-    // Drag and Drop
     ['dragenter', 'dragover'].forEach(eventName => {
       dropzone.addEventListener(eventName, (e) => {
         e.preventDefault();
@@ -93,28 +117,21 @@ function initClassifier() {
     });
 
     dropzone.addEventListener('drop', (e) => {
-      const dt = e.dataTransfer;
-      const files = dt.files;
+      const files = e.dataTransfer.files;
       if (files.length > 0) {
-        handleImageFile(files[0]);
+        handleUploadedFile(files[0]);
       }
     });
 
     fileInput.addEventListener('change', (e) => {
       if (e.target.files && e.target.files[0]) {
-        handleImageFile(e.target.files[0]);
+        handleUploadedFile(e.target.files[0]);
       }
     });
   }
-
-  // Load initial sample
-  setClassifierState('result');
 }
 
-/**
- * Handle user uploaded image file
- */
-function handleImageFile(file) {
+function handleUploadedFile(file) {
   if (!file.type.startsWith('image/')) {
     setClassifierState('error');
     return;
@@ -122,30 +139,27 @@ function handleImageFile(file) {
 
   const reader = new FileReader();
   reader.onload = function(evt) {
-    const previewImg = document.getElementById('preview-image-node');
-    if (previewImg) previewImg.src = evt.target.result;
+    const preview = document.getElementById('preview-image-node');
+    if (preview) preview.src = evt.target.result;
 
-    const metaStrip = document.getElementById('file-meta-strip');
-    if (metaStrip) {
-      const sizeKb = (file.size / 1024).toFixed(1);
-      metaStrip.innerHTML = `<span>${file.name}</span><span>·</span><span>${sizeKb} KB</span>`;
+    const meta = document.getElementById('file-meta-strip');
+    if (meta) {
+      const kb = (file.size / 1024).toFixed(1);
+      meta.innerHTML = `<span>${file.name}</span><span>·</span><span>${kb} KB</span>`;
     }
 
-    const headerBadge = document.getElementById('left-header-badge');
-    if (headerBadge) headerBadge.textContent = '32 × 32 px (Unanalyzed)';
+    const badge = document.getElementById('left-header-badge');
+    if (badge) badge.textContent = '32 × 32 px (Unanalyzed)';
 
     setClassifierState('selected');
   };
   reader.readAsDataURL(file);
 }
 
-/**
- * Switch classifier state ('empty' | 'selected' | 'loading' | 'result' | 'error')
- */
 function setClassifierState(state) {
   currentState = state;
 
-  // Update tab buttons
+  // Update tabs
   document.querySelectorAll('.state-tab-btn').forEach(btn => {
     btn.classList.remove('active');
   });
@@ -160,90 +174,81 @@ function setClassifierState(state) {
   const tensorBox = document.getElementById('tensor-detection-box');
   const headerBadge = document.getElementById('left-header-badge');
 
-  // Hide all right panels
+  // Panels
   ['result', 'selected', 'loading', 'empty', 'error'].forEach(p => {
     const el = document.getElementById(`panel-${p}`);
     if (el) el.classList.add('hidden');
   });
 
-  // Show active right panel
   const targetPanel = document.getElementById(`panel-${state}`);
   if (targetPanel) targetPanel.classList.remove('hidden');
 
-  // Viewport states
   if (state === 'empty') {
-    if (viewEmpty) viewEmpty.classList.remove('hidden');
-    if (viewImage) viewImage.classList.add('hidden');
-    if (viewError) viewError.classList.add('hidden');
-    if (headerBadge) headerBadge.textContent = 'Awaiting Upload';
+    viewEmpty.classList.remove('hidden');
+    viewImage.classList.add('hidden');
+    viewError.classList.add('hidden');
+    headerBadge.textContent = 'Awaiting Upload';
   } else if (state === 'error') {
-    if (viewEmpty) viewEmpty.classList.add('hidden');
-    if (viewImage) viewImage.classList.add('hidden');
-    if (viewError) viewError.classList.remove('hidden');
-    if (headerBadge) headerBadge.textContent = 'Stream Error';
+    viewEmpty.classList.add('hidden');
+    viewImage.classList.add('hidden');
+    viewError.classList.remove('hidden');
+    headerBadge.textContent = 'Stream Error';
   } else if (state === 'loading') {
-    if (viewEmpty) viewEmpty.classList.add('hidden');
-    if (viewImage) viewImage.classList.remove('hidden');
-    if (viewError) viewError.classList.add('hidden');
-    if (scanningLaser) scanningLaser.classList.remove('hidden');
-    if (tensorBox) tensorBox.classList.add('hidden');
-    if (headerBadge) headerBadge.textContent = 'Evaluating Tensor...';
+    viewEmpty.classList.add('hidden');
+    viewImage.classList.remove('hidden');
+    viewError.classList.add('hidden');
+    scanningLaser.classList.remove('hidden');
+    tensorBox.classList.add('hidden');
+    headerBadge.textContent = 'Evaluating Tensor...';
   } else if (state === 'selected') {
-    if (viewEmpty) viewEmpty.classList.add('hidden');
-    if (viewImage) viewImage.classList.remove('hidden');
-    if (viewError) viewError.classList.add('hidden');
-    if (scanningLaser) scanningLaser.classList.add('hidden');
-    if (tensorBox) tensorBox.classList.add('hidden');
-    if (headerBadge) headerBadge.textContent = '32 × 32 px (Ready)';
+    viewEmpty.classList.add('hidden');
+    viewImage.classList.remove('hidden');
+    viewError.classList.add('hidden');
+    scanningLaser.classList.add('hidden');
+    tensorBox.classList.add('hidden');
+    headerBadge.textContent = '32 × 32 px (Ready)';
   } else if (state === 'result') {
-    if (viewEmpty) viewEmpty.classList.add('hidden');
-    if (viewImage) viewImage.classList.remove('hidden');
-    if (viewError) viewError.classList.add('hidden');
-    if (scanningLaser) scanningLaser.classList.add('hidden');
-    if (tensorBox) tensorBox.classList.remove('hidden');
-    if (headerBadge) headerBadge.textContent = '32 × 32 px (Rescaled)';
-    renderPredictionResults(currentActivePreset);
+    viewEmpty.classList.add('hidden');
+    viewImage.classList.remove('hidden');
+    viewError.classList.add('hidden');
+    scanningLaser.classList.add('hidden');
+    tensorBox.classList.remove('hidden');
+    headerBadge.textContent = '32 × 32 px (Rescaled)';
+    renderPredictionData(currentPreset);
   }
 }
 
-/**
- * Render telemetry and probabilities for a prediction result
- */
-function renderPredictionResults(data) {
-  const classNameEl = document.getElementById('result-class-name');
-  if (classNameEl) classNameEl.textContent = data.predictedClass;
+function renderPredictionData(data) {
+  const nameEl = document.getElementById('result-class-name');
+  if (nameEl) nameEl.textContent = data.predictedClass;
 
-  const confValEl = document.getElementById('result-confidence-val');
-  if (confValEl) confValEl.textContent = `${data.confidence}% Confidence`;
+  const confEl = document.getElementById('result-confidence-val');
+  if (confEl) confEl.textContent = `${data.confidence}% Confidence`;
 
-  const radialPctEl = document.getElementById('radial-pct-text');
-  if (radialPctEl) radialPctEl.textContent = `${data.confidence.toFixed(1)}%`;
+  const radialPct = document.getElementById('radial-pct-text');
+  if (radialPct) radialPct.textContent = `${data.confidence.toFixed(1)}%`;
 
-  const gaugeCircle = document.getElementById('gauge-circle-val');
-  if (gaugeCircle) {
-    gaugeCircle.setAttribute('stroke-dasharray', `${data.confidence}, 100`);
-  }
+  const gauge = document.getElementById('gauge-circle-val');
+  if (gauge) gauge.setAttribute('stroke-dasharray', `${data.confidence}, 100`);
 
-  const tensorTag = document.getElementById('tensor-class-tag');
-  if (tensorTag) {
-    tensorTag.textContent = `cifar_class: ${data.predictedClass.toLowerCase()} [${(data.confidence/100).toFixed(4)}]`;
-  }
+  const tag = document.getElementById('tensor-class-tag');
+  if (tag) tag.textContent = `cifar_class: ${data.predictedClass.toLowerCase()} [${(data.confidence/100).toFixed(4)}]`;
 
-  const tensorRoi = document.getElementById('tensor-roi-tag');
-  if (tensorRoi) tensorRoi.textContent = `ROI: ${data.roi}`;
+  const roi = document.getElementById('tensor-roi-tag');
+  if (roi) roi.textContent = `ROI: ${data.roi}`;
 
   const metaFooter = document.getElementById('result-meta-footer');
   if (metaFooter) {
     metaFooter.innerHTML = `
       <span>Superclass: ${data.superclass}</span>
       <span>Loss: ${data.loss}</span>
-      <span>Latency: ${data.inferenceTime}</span>
+      <span>Arch: ConvNet-v2.1</span>
     `;
   }
 
-  const top5Container = document.getElementById('top5-predictions-container');
-  if (top5Container && data.top5) {
-    top5Container.innerHTML = data.top5.map((item, idx) => `
+  const top5Box = document.getElementById('top5-predictions-container');
+  if (top5Box && data.top5) {
+    top5Box.innerHTML = data.top5.map((item, idx) => `
       <div class="prediction-row ${idx === 0 ? 'top-rank' : ''}">
         <div class="pred-row-header">
           <span class="pred-class-label">
@@ -252,45 +257,36 @@ function renderPredictionResults(data) {
           <span class="pred-prob-val">${item.prob}</span>
         </div>
         <div class="progress-bar-track">
-          <div class="progress-bar-fill ${idx === 0 ? 'indigo' : 'muted'}" style="width: ${item.width};"></div>
+          <div class="progress-bar-fill ${idx === 0 ? '' : 'muted'}" style="width: ${item.width};"></div>
         </div>
       </div>
     `).join('');
   }
 }
 
-/**
- * Trigger file selection dialog
- */
 function triggerFileSelect() {
   const input = document.getElementById('file-input-el');
   if (input) input.click();
 }
 
-/**
- * Toggle 32x32 pixel grid overlay
- */
 function togglePixelGrid() {
   isGridActive = !isGridActive;
-  const gridLayer = document.getElementById('pixel-grid-layer');
-  const toggleLabel = document.getElementById('grid-toggle-text');
-  if (gridLayer) {
+  const grid = document.getElementById('pixel-grid-layer');
+  const label = document.getElementById('grid-toggle-text');
+  if (grid) {
     if (isGridActive) {
-      gridLayer.classList.remove('hidden');
-      if (toggleLabel) toggleLabel.textContent = 'Grid: On';
+      grid.classList.remove('hidden');
+      if (label) label.textContent = 'Grid: On';
     } else {
-      gridLayer.classList.add('hidden');
-      if (toggleLabel) toggleLabel.textContent = 'Grid: Off';
+      grid.classList.add('hidden');
+      if (label) label.textContent = 'Grid: Off';
     }
   }
 }
 
-/**
- * Load a preset sample (e.g. apple, dolphin, motorcycle)
- */
 function loadSamplePreset(presetKey) {
   const sample = SAMPLE_PRESETS[presetKey] || SAMPLE_PRESETS.apple;
-  currentActivePreset = sample;
+  currentPreset = sample;
 
   const preview = document.getElementById('preview-image-node');
   if (preview) preview.src = sample.src;
@@ -303,45 +299,40 @@ function loadSamplePreset(presetKey) {
   setClassifierState('result');
 }
 
-/**
- * Reset back to default sample apple
- */
 function resetSampleImage() {
   loadSamplePreset('apple');
 }
 
-/**
- * Simulate the CNN feedforward execution with step-by-step telemetry
- * (Ready to be swapped with real FastAPI backend call)
- */
-function runInference() {
+function simulateInference() {
   setClassifierState('loading');
-  
-  // Future implementation:
-  // callBackendInference(imageBlob).then(result => renderPredictionResults(result))
-  
   setTimeout(() => {
     setClassifierState('result');
   }, 1200);
 }
 
-/**
- * Clean API boundary function for future FastAPI POST /predict integration
- */
-async function callBackendInference(imageFile) {
-  const formData = new FormData();
-  formData.append('file', imageFile);
+/* --------------------------------------------------------------------------
+   Taxonomy Search Filter
+   -------------------------------------------------------------------------- */
+function filterClassBadges() {
+  const query = (document.getElementById('class-search-input')?.value || '').toLowerCase().trim();
+  const pills = document.querySelectorAll('.class-pill');
 
-  try {
-    const response = await fetch('/api/predict', {
-      method: 'POST',
-      body: formData
-    });
-
-    if (!response.ok) throw new Error('Inference failed');
-    return await response.json();
-  } catch (err) {
-    console.error('Inference error:', err);
-    throw err;
-  }
+  pills.forEach(pill => {
+    const text = pill.textContent.toLowerCase();
+    if (text.includes(query)) {
+      pill.classList.remove('dimmed');
+      if (query.length > 0) {
+        pill.classList.add('highlighted');
+      } else {
+        pill.classList.remove('highlighted');
+      }
+    } else {
+      if (query.length > 0) {
+        pill.classList.add('dimmed');
+        pill.classList.remove('highlighted');
+      } else {
+        pill.classList.remove('dimmed', 'highlighted');
+      }
+    }
+  });
 }

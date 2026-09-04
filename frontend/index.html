@@ -3,22 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Classifier Workbench — CIFAR-100 Image Classifier</title>
+  <title>CIFAR-100 Image Classifier</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  
-  <!-- Design System CSS -->
-  <link rel="stylesheet" href="../css/global.css">
-  <link rel="stylesheet" href="../css/components.css">
-  <link rel="stylesheet" href="../css/classifier.css">
+  <link rel="stylesheet" href="css/style.css">
 </head>
-<body data-page="classifier">
+<body>
 
-  <!-- TOP NAVIGATION HEADER -->
+  <!-- TOP NAVIGATION CHROME -->
   <header class="site-header">
     <div class="container header-inner">
-      <a href="../index.html" class="brand-link" aria-label="CIFAR-100 Classifier Home">
+      <a href="#" class="brand-link" aria-label="CIFAR-100 Classifier Home">
         <div class="brand-logo-icon">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -31,10 +27,10 @@
       </a>
 
       <nav class="desktop-nav" aria-label="Main Navigation">
-        <a href="classifier.html" class="nav-link active">Classifier</a>
-        <a href="architecture.html" class="nav-link">Architecture</a>
-        <a href="taxonomy.html" class="nav-link">Taxonomy</a>
-        <a href="research.html" class="nav-link">Research</a>
+        <a href="#classifier" class="nav-link active">Classifier</a>
+        <a href="#pipeline" class="nav-link">Architecture</a>
+        <a href="#dataset" class="nav-link">Taxonomy</a>
+        <a href="#about" class="nav-link">Research</a>
       </nav>
 
       <div class="header-actions">
@@ -46,7 +42,7 @@
           </svg>
           <span>GitHub</span>
         </a>
-        <button id="mobile-nav-toggle-btn" class="mobile-nav-toggle" aria-label="Open navigation menu" aria-expanded="false">
+        <button id="mobile-nav-toggle-btn" class="mobile-nav-toggle" aria-label="Open navigation menu">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="3" y1="12" x2="21" y2="12"></line>
             <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -58,19 +54,19 @@
 
     <!-- Mobile Slide Drawer -->
     <div id="mobile-menu-drawer" class="mobile-menu-drawer">
-      <a href="classifier.html" class="mobile-nav-link active">Classifier</a>
-      <a href="architecture.html" class="mobile-nav-link">Architecture</a>
-      <a href="taxonomy.html" class="mobile-nav-link">Taxonomy</a>
-      <a href="research.html" class="mobile-nav-link">Research</a>
+      <a href="#classifier" class="mobile-nav-link">Classifier</a>
+      <a href="#pipeline" class="mobile-nav-link">Architecture</a>
+      <a href="#dataset" class="mobile-nav-link">Taxonomy</a>
+      <a href="#about" class="mobile-nav-link">Research</a>
     </div>
   </header>
 
-  <!-- MAIN VIEWPORT -->
+  <!-- MAIN APPLICATION BODY -->
   <main class="main-content">
     <div class="container">
       
-      <!-- HERO BANNER -->
-      <section class="classifier-hero">
+      <!-- HERO SECTION -->
+      <section class="hero-section">
         <div class="hero-grid">
           <div class="hero-content">
             <div class="hero-badge">
@@ -82,13 +78,13 @@
               Upload an image and let an optimized convolutional neural network inspect its spatial activations. Inspect categorical distributions, confidence margins, and top alternative classifications in real time.
             </p>
             <div class="hero-actions">
-              <a href="#classifier-workbench" class="btn btn-primary btn-lg">
+              <a href="#classifier" class="btn btn-primary btn-lg">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M4 7V4h3M20 7V4h-3M4 17v3h3M20 17v3h-3M9 12h6M12 9v6"></path>
                 </svg>
                 <span>Classify an Image</span>
               </a>
-              <a href="architecture.html" class="btn btn-secondary btn-lg">
+              <a href="#pipeline" class="btn btn-secondary btn-lg">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="3"></circle>
                   <path d="M3 9h6l3 6h9"></path>
@@ -116,7 +112,7 @@
             </div>
           </div>
 
-          <!-- Mini Pipeline Flow Preview -->
+          <!-- Feedforward Mini Pipeline Preview -->
           <div class="pipeline-flow-card">
             <div class="card-header">
               <div class="card-header-title">
@@ -176,7 +172,7 @@
       </section>
 
       <!-- CLASSIFIER WORKBENCH -->
-      <section class="section" id="classifier-workbench">
+      <section class="section scroll-mt" id="classifier">
         <div class="workbench-header">
           <div>
             <span class="section-eyebrow">IMAGE CLASSIFICATION WORKBENCH</span>
@@ -186,8 +182,8 @@
             </p>
           </div>
 
-          <!-- State Tab Switcher -->
-          <div class="segmented-tabs" role="tablist" aria-label="Classifier UI Demonstration States">
+          <!-- Segmented Tab States -->
+          <div class="segmented-tabs" role="tablist" aria-label="Classifier States">
             <button class="tab-btn state-tab-btn active" id="btn-state-result" onclick="setClassifierState('result')">
               Prediction Result
             </button>
@@ -206,10 +202,10 @@
           </div>
         </div>
 
-        <!-- Main 2-Column Workbench Card -->
+        <!-- 2-Column Workbench Card -->
         <div class="workbench-card">
           
-          <!-- LEFT COLUMN: Image Viewport -->
+          <!-- LEFT COLUMN: Viewport -->
           <div class="viewport-wrapper">
             <div>
               <div class="card-header">
@@ -226,7 +222,7 @@
               <!-- VIEWPORT BOX -->
               <div class="viewport-container">
                 
-                <!-- STATE 1: EMPTY DROPZONE -->
+                <!-- EMPTY DROPZONE -->
                 <div class="dropzone-view hidden" id="view-empty" onclick="triggerFileSelect()">
                   <input type="file" id="file-input-el" accept="image/png,image/jpeg,image/webp" class="hidden">
                   <div class="dropzone-icon">
@@ -241,21 +237,18 @@
                   <button type="button" class="btn btn-primary btn-sm">Select File</button>
                 </div>
 
-                <!-- STATE 2, 3, 4: ACTIVE IMAGE CONTAINER -->
+                <!-- ACTIVE IMAGE VIEWPORT -->
                 <div class="image-viewport" id="view-image">
-                  <!-- Crop Crosshairs -->
                   <div class="crop-corner tl"></div>
                   <div class="crop-corner tr"></div>
                   <div class="crop-corner bl"></div>
                   <div class="crop-corner br"></div>
 
-                  <!-- Tensor Tag Overlay -->
                   <div class="tensor-box" id="tensor-detection-box">
                     <div class="tensor-tag-top" id="tensor-class-tag">cifar_class: apple [0.9428]</div>
                     <div class="tensor-tag-bottom" id="tensor-roi-tag">ROI: (4, 4, 28, 28)</div>
                   </div>
 
-                  <!-- Image Canvas -->
                   <div class="preview-canvas-box">
                     <img id="preview-image-node" src="https://lh3.googleusercontent.com/aida/AEtjO1UxtM6UphbpOJFoBaSihrwsvDAF-cu3-z9plOHEtWz_Noapuxsb8wVM0Q4tv7YCw8J4zcD7pg_Av6sNH_1VZx2IDxAGgXi2JKJQANYu5pG0OFDJg_nUhW4jccTNe8MrvLy7OptqXza3ccNiOh8scLmQGOx9x5iUnCIXRl3UuAx63KTjPtfgx4J6wvgl2YjMTN9gvt70NDgLfANwibok3YEyUSuFe1SR9Lze9sr2iT41U_lJgWJ3k6gWJw" alt="Classification Target" class="preview-img">
                     <div class="scanning-laser hidden" id="scanning-laser"></div>
@@ -263,7 +256,7 @@
                   </div>
                 </div>
 
-                <!-- STATE 5: ERROR VIEWPORT -->
+                <!-- ERROR VIEWPORT -->
                 <div class="panel-center-state hidden" id="view-error">
                   <div class="state-icon-box state-icon-error">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -304,9 +297,9 @@
                 </div>
               </div>
 
-              <!-- Quick Presets -->
+              <!-- Presets -->
               <div class="sample-presets-strip">
-                <span class="font-mono" style="font-size: 11px; color: var(--text-tertiary);">Quick Presets:</span>
+                <span class="font-mono" style="font-size: 11px; color: var(--text-tertiary);">Presets:</span>
                 <button type="button" class="sample-chip-btn" onclick="loadSamplePreset('apple')">🍎 Apple</button>
                 <button type="button" class="sample-chip-btn" onclick="loadSamplePreset('dolphin')">🐬 Dolphin</button>
                 <button type="button" class="sample-chip-btn" onclick="loadSamplePreset('motorcycle')">🏍️ Motorcycle</button>
@@ -315,10 +308,10 @@
 
           </div>
 
-          <!-- RIGHT COLUMN: Telemetry & Result Panels -->
+          <!-- RIGHT COLUMN: Telemetry -->
           <div class="telemetry-wrapper">
             
-            <!-- PANEL 1: PREDICTION RESULT -->
+            <!-- PANEL: PREDICTION RESULT -->
             <div class="flex" id="panel-result" style="flex-direction: column; height: 100%; justify-content: space-between;">
               <div>
                 <div class="card-header">
@@ -329,7 +322,7 @@
                   </span>
                 </div>
 
-                <!-- Primary Predicted Class & SVG Gauge -->
+                <!-- Primary Predicted Class & Gauge -->
                 <div class="predicted-class-card">
                   <div>
                     <span class="section-eyebrow" style="margin-bottom: 2px;">PREDICTED CLASS</span>
@@ -355,26 +348,24 @@
                   </div>
                 </div>
 
-                <!-- Top 5 Predictions -->
+                <!-- Top 5 List -->
                 <div>
                   <div class="card-header" style="border-bottom: none; padding-bottom: 4px; margin-bottom: 8px;">
                     <span class="section-eyebrow">Top 5 Alternative Classes</span>
                     <span class="section-eyebrow">Softmax Probability</span>
                   </div>
-                  <div class="top-predictions-list" id="top5-predictions-container">
-                    <!-- Dynamic Top 5 rows -->
-                  </div>
+                  <div class="top-predictions-list" id="top5-predictions-container"></div>
                 </div>
               </div>
 
               <div class="card-footer" id="result-meta-footer">
-                <span>Superclass: Fruit & Vegetables (Superclass #04)</span>
+                <span>Class ID: #00 (Fruit & Veg)</span>
                 <span>Loss: 0.124</span>
-                <span>Latency: 18ms</span>
+                <span>Arch: ConvNet-v2.1</span>
               </div>
             </div>
 
-            <!-- PANEL 2: IMAGE SELECTED -->
+            <!-- PANEL: IMAGE SELECTED -->
             <div class="panel-center-state hidden" id="panel-selected">
               <div class="state-icon-box state-icon-success">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -386,7 +377,7 @@
               <p class="state-desc">
                 Normalized to float32 spatial tensor (32 × 32 × 3). Ready for convolution forward pass.
               </p>
-              <button type="button" class="btn btn-primary btn-lg" onclick="runInference()">
+              <button type="button" class="btn btn-primary btn-lg" onclick="simulateInference()">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polygon points="5 3 19 12 5 21 5 3"></polygon>
                 </svg>
@@ -394,7 +385,7 @@
               </button>
             </div>
 
-            <!-- PANEL 3: LOADING -->
+            <!-- PANEL: LOADING -->
             <div class="panel-center-state hidden" id="panel-loading">
               <div class="state-icon-box state-icon-neutral">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;">
@@ -412,7 +403,7 @@
                   <span>01. Tensor scaling (32×32×3)</span>
                 </div>
                 <div class="loading-step-item active">
-                  <span class="status-dot status-dot-indigo"></span>
+                  <span class="status-dot status-dot-zinc"></span>
                   <span>02. Feature maps (16 filters)</span>
                 </div>
                 <div class="loading-step-item">
@@ -422,7 +413,7 @@
               </div>
             </div>
 
-            <!-- PANEL 4: EMPTY -->
+            <!-- PANEL: EMPTY -->
             <div class="panel-center-state hidden" id="panel-empty">
               <div class="state-icon-box state-icon-neutral">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -433,14 +424,14 @@
               </div>
               <h3 class="state-title">Awaiting Input Image</h3>
               <p class="state-desc">
-                Upload or drag a photo on the left to inspect feedforward classification and probability telemetry.
+                Upload or drag a photo on the left to see feedforward classification and probability telemetry.
               </p>
               <button type="button" class="btn btn-secondary btn-sm" onclick="setClassifierState('result')">
                 Load Sample Apple Matrix →
               </button>
             </div>
 
-            <!-- PANEL 5: ERROR -->
+            <!-- PANEL: ERROR -->
             <div class="panel-center-state hidden" id="panel-error">
               <div class="state-icon-box state-icon-error">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -464,8 +455,8 @@
         </div>
       </section>
 
-      <!-- SPECIFICATIONS BENTO GRID -->
-      <section class="section">
+      <!-- SPECIFICATIONS BENTO -->
+      <section class="section scroll-mt" id="model">
         <div class="section-header">
           <span class="section-eyebrow">SPECIFICATIONS</span>
           <h2 class="section-title">Model at a glance.</h2>
@@ -508,6 +499,331 @@
         </div>
       </section>
 
+      <!-- TECHNICAL PIPELINE -->
+      <section class="section scroll-mt" id="pipeline">
+        <div class="section-header">
+          <span class="section-eyebrow">TECHNICAL PIPELINE</span>
+          <h2 class="section-title">From pixels to prediction.</h2>
+          <p class="section-desc">
+            A 4-stage convolutional pipeline transforming raw pixel matrices into probabilistic class distributions.
+          </p>
+        </div>
+
+        <div class="stages-grid">
+          <!-- Stage 01 -->
+          <div class="stage-card">
+            <div>
+              <div class="stage-header">
+                <span class="badge badge-neutral">STAGE 01</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+              </div>
+              <h3 class="stage-title">Input Matrix</h3>
+              <p class="stage-desc">
+                Receive a 32 × 32 RGB image and normalize pixel channels from uint8 integers [0-255] to float32 scales [0.0-1.0].
+              </p>
+            </div>
+            <div class="stage-badge-box">Shape: (1, 32, 32, 3)</div>
+          </div>
+
+          <!-- Stage 02 -->
+          <div class="stage-card">
+            <div>
+              <div class="stage-header">
+                <span class="badge badge-neutral">STAGE 02</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24"></path>
+                </svg>
+              </div>
+              <h3 class="stage-title">Convolution</h3>
+              <p class="stage-desc">
+                Extract edges, textures, shapes and localized patterns using spatial 3×3 receptive field kernels with ReLU activations.
+              </p>
+            </div>
+            <div class="stage-badge-box">Filter: Conv2D(32, 3×3)</div>
+          </div>
+
+          <!-- Stage 03 -->
+          <div class="stage-card">
+            <div>
+              <div class="stage-header">
+                <span class="badge badge-neutral">STAGE 03</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                  <polyline points="2 17 12 22 22 17"></polyline>
+                  <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+              </div>
+              <h3 class="stage-title">Feature Pooling</h3>
+              <p class="stage-desc">
+                Compress activations to build increasingly compact hierarchical representations while maintaining spatial invariance.
+              </p>
+            </div>
+            <div class="stage-badge-box">Downsample: MaxPool2D(2×2)</div>
+          </div>
+
+          <!-- Stage 04 -->
+          <div class="stage-card">
+            <div>
+              <div class="stage-header">
+                <span class="badge badge-neutral">STAGE 04</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+              </div>
+              <h3 class="stage-title">Classification</h3>
+              <p class="stage-desc">
+                Flattened dense layers compute softmax probabilities across all 100 fine categories, producing likelihood distributions.
+              </p>
+            </div>
+            <div class="stage-badge-box">Dense(100, softmax)</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FOUNDATIONAL THEORY -->
+      <section class="section">
+        <div class="card" style="padding: 32px;">
+          <div style="max-width: 680px; margin-bottom: 24px;">
+            <span class="section-eyebrow">FOUNDATIONAL THEORY</span>
+            <h2 class="section-title">Why use a Convolutional Neural Network?</h2>
+            <p class="section-desc">
+              Unlike standard feedforward multi-layer perceptrons that treat pixel arrays as flat 1D vectors, CNNs preserve 2D topological geometry through localized receptive fields and shared weight matrices.
+            </p>
+          </div>
+
+          <div class="stages-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
+            <div class="stage-card" style="background-color: var(--bg-canvas);">
+              <div style="margin-bottom: 12px;">
+                <div class="brand-logo-icon" style="margin-bottom: 12px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h3M20 7V4h-3M4 17v3h3M20 17v3h-3"></path></svg>
+                </div>
+                <h3 class="stage-title">Local Receptive Fields</h3>
+                <p class="stage-desc">
+                  Filters process nearby pixel neighborhoods directly, identifying local edges, gradients, and textures without spatial flattening.
+                </p>
+              </div>
+            </div>
+
+            <div class="stage-card" style="background-color: var(--bg-canvas);">
+              <div style="margin-bottom: 12px;">
+                <div class="brand-logo-icon" style="margin-bottom: 12px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"></line></svg>
+                </div>
+                <h3 class="stage-title">Weight Sharing</h3>
+                <p class="stage-desc">
+                  The identical filter weights scan across the entire grid, granting translation invariance and lowering parameter counts.
+                </p>
+              </div>
+            </div>
+
+            <div class="stage-card" style="background-color: var(--bg-canvas);">
+              <div style="margin-bottom: 12px;">
+                <div class="brand-logo-icon" style="margin-bottom: 12px;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                </div>
+                <h3 class="stage-title">Hierarchical Features</h3>
+                <p class="stage-desc">
+                  Early layers capture primitive contours; intermediate layers compose textures; deeper layers resolve semantic classes.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DATASET TAXONOMY EXPLORER -->
+      <section class="section scroll-mt" id="dataset">
+        <div class="taxonomy-header">
+          <div>
+            <span class="section-eyebrow">DATASET TAXONOMY</span>
+            <h2 class="section-title">100 classes. One model.</h2>
+            <p class="section-desc">
+              CIFAR-100 contains 100 fine-grained categories grouped into 20 cohesive superclasses.
+            </p>
+          </div>
+
+          <div style="width: 100%; max-width: 280px;">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input type="text" id="class-search-input" class="search-input" placeholder="Filter categories..." onkeyup="filterClassBadges()" autocomplete="off">
+            </div>
+          </div>
+        </div>
+
+        <div class="taxonomy-grid">
+          <!-- Superclass 1 -->
+          <div class="superclass-card">
+            <div class="superclass-header">
+              <span class="superclass-title">Fruit &amp; Vegetables</span>
+              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
+            </div>
+            <div class="class-pills-wrap">
+              <span class="class-pill">Apple</span>
+              <span class="class-pill">Mushroom</span>
+              <span class="class-pill">Orange</span>
+              <span class="class-pill">Pear</span>
+              <span class="class-pill">Sweet Pepper</span>
+            </div>
+          </div>
+
+          <!-- Superclass 2 -->
+          <div class="superclass-card">
+            <div class="superclass-header">
+              <span class="superclass-title">Aquatic Life</span>
+              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
+            </div>
+            <div class="class-pills-wrap">
+              <span class="class-pill">Beaver</span>
+              <span class="class-pill">Dolphin</span>
+              <span class="class-pill">Otter</span>
+              <span class="class-pill">Seal</span>
+              <span class="class-pill">Whale</span>
+            </div>
+          </div>
+
+          <!-- Superclass 3 -->
+          <div class="superclass-card">
+            <div class="superclass-header">
+              <span class="superclass-title">Vehicles (Large)</span>
+              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
+            </div>
+            <div class="class-pills-wrap">
+              <span class="class-pill">Bicycle</span>
+              <span class="class-pill">Bus</span>
+              <span class="class-pill">Motorcycle</span>
+              <span class="class-pill">Pickup Truck</span>
+              <span class="class-pill">Train</span>
+            </div>
+          </div>
+
+          <!-- Superclass 4 -->
+          <div class="superclass-card">
+            <div class="superclass-header">
+              <span class="superclass-title">Large Carnivores</span>
+              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
+            </div>
+            <div class="class-pills-wrap">
+              <span class="class-pill">Bear</span>
+              <span class="class-pill">Leopard</span>
+              <span class="class-pill">Lion</span>
+              <span class="class-pill">Tiger</span>
+              <span class="class-pill">Wolf</span>
+            </div>
+          </div>
+
+          <!-- Superclass 5 -->
+          <div class="superclass-card">
+            <div class="superclass-header">
+              <span class="superclass-title">Scenes &amp; Landscapes</span>
+              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
+            </div>
+            <div class="class-pills-wrap">
+              <span class="class-pill">Cloud</span>
+              <span class="class-pill">Forest</span>
+              <span class="class-pill">Mountain</span>
+              <span class="class-pill">Plain</span>
+              <span class="class-pill">Sea</span>
+            </div>
+          </div>
+
+          <!-- Superclass 6 -->
+          <div class="superclass-card">
+            <div class="superclass-header">
+              <span class="superclass-title">Buildings &amp; Structures</span>
+              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
+            </div>
+            <div class="class-pills-wrap">
+              <span class="class-pill">Bridge</span>
+              <span class="class-pill">Castle</span>
+              <span class="class-pill">House</span>
+              <span class="class-pill">Road</span>
+              <span class="class-pill">Skyscraper</span>
+            </div>
+          </div>
+
+          <!-- Superclass 7 -->
+          <div class="superclass-card">
+            <div class="superclass-header">
+              <span class="superclass-title">Small Mammals</span>
+              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
+            </div>
+            <div class="class-pills-wrap">
+              <span class="class-pill">Hamster</span>
+              <span class="class-pill">Mouse</span>
+              <span class="class-pill">Rabbit</span>
+              <span class="class-pill">Shrew</span>
+              <span class="class-pill">Squirrel</span>
+            </div>
+          </div>
+
+          <!-- Superclass 8 -->
+          <div class="superclass-card">
+            <div class="superclass-header">
+              <span class="superclass-title">Household Furniture</span>
+              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
+            </div>
+            <div class="class-pills-wrap">
+              <span class="class-pill">Bed</span>
+              <span class="class-pill">Chair</span>
+              <span class="class-pill">Couch</span>
+              <span class="class-pill">Table</span>
+              <span class="class-pill">Wardrobe</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RESEARCH & ARCHITECTURE -->
+      <section class="section scroll-mt" id="about">
+        <div class="card" style="padding: 32px;">
+          <div class="research-grid-2col">
+            <div>
+              <span class="section-eyebrow">RESEARCH &amp; ARCHITECTURE</span>
+              <h2 class="section-title" style="margin-top: 4px; margin-bottom: 12px;">Academic AI/ML Project</h2>
+              <p class="research-text">
+                The CIFAR-100 Image Classifier demonstrates how convolutional neural network representations generalize across diverse visual categories under constrained spatial resolutions.
+              </p>
+              <div class="key-points-list">
+                <div class="key-point-item">
+                  <span class="key-point-bullet"></span>
+                  <p><strong>Inference Ready:</strong> Clean asynchronous state architecture ready for integration with a FastAPI Python backend exposing Keras <code class="font-mono" style="font-size: 11px; background-color: var(--bg-surface-subtle); padding: 2px 6px; border-radius: 4px;">model.predict()</code> endpoints.</p>
+                </div>
+                <div class="key-point-item">
+                  <span class="key-point-bullet"></span>
+                  <p><strong>Data Augmentation:</strong> Trained using random spatial rotations, horizontal flips, and channel standardization to prevent catastrophic overfitting on low-resolution inputs.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Engineered With Box -->
+            <div style="background-color: var(--bg-canvas); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: var(--space-5);">
+              <span class="section-eyebrow">ENGINEERED WITH</span>
+              <div class="tech-tag-group">
+                <span class="tech-tag">TensorFlow</span>
+                <span class="tech-tag">Keras</span>
+                <span class="tech-tag">Python 3.10</span>
+                <span class="tech-tag">NumPy</span>
+                <span class="tech-tag">FastAPI</span>
+                <span class="tech-tag">CIFAR-100</span>
+              </div>
+              <div class="code-box">
+                <div class="comment"># CLI validation script</div>
+                <div class="command">$ python eval_cifar.py --weights best.h5</div>
+                <div class="output">Top-1 Acc: 78.4% · Top-5 Acc: 93.8%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div>
   </main>
 
@@ -520,18 +836,14 @@
         <span>Academic AI/ML Project</span>
       </div>
       <div class="footer-links">
-        <a href="classifier.html">Inference Studio</a>
-        <a href="architecture.html">Architecture</a>
-        <a href="taxonomy.html">Taxonomy</a>
-        <a href="research.html">Research</a>
+        <a href="#classifier">Inference Studio</a>
+        <a href="#pipeline">Architecture</a>
+        <a href="#about">Documentation</a>
       </div>
     </div>
   </footer>
 
-  <!-- Page Scripts -->
-  <script src="../js/navigation.js"></script>
-  <script src="../js/classifier.js"></script>
-  <script src="../js/main.js"></script>
+  <script src="js/app.js"></script>
 
   <style>
     @keyframes spin {
