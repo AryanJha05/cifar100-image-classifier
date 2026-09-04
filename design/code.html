@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CIFAR-100 Image Classifier</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #FAFAF9;
+        color: #18181B;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+      body { overscroll-behavior: none; }
+    }
+    ::-webkit-scrollbar { display: none; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="bg-[#FAFAF9] text-zinc-900 antialiased selection:bg-zinc-200">
+<!-- TOP NAVIGATION CHROME -->
+<header class="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-md border-b border-zinc-200/80">
+<div class="max-w-6xl mx-auto px-6 md:px-10 h-16 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg overflow-hidden border border-zinc-200/80 bg-zinc-50 flex items-center justify-center p-0.5 shadow-xs">
+<img alt="CIFAR-100 Classifier" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1UfVCXZHb5wK80x7z4U3u2JyBNngd8Z5Owg0DZz1W6wO1NqL3gwmtHNQafkD74AY9FW1LbMP0AeczJEuySlICLLDaKpmQuCqBvFBMnHrbjglS4AtnDpl62V0zFG54CuhLvlPs_phkmtot52ZcM4CtHW0Q6bK8Vu9fuZNYOFzC9WiZXzcmHHMZpV0SrmITBNTlk9k94AjLQE--YiyXvBs2DY0_GAPVc_ypSs0HeC8SsdgRCl-KUGZfYnON4"/>
+</div>
+<div class="flex items-center gap-2.5">
+<span class="font-semibold text-[15px] tracking-tight text-zinc-900">CIFAR-100 Classifier</span>
+<span class="font-mono text-[11px] font-medium text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200/70">CNN v1.4</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<nav class="hidden md:flex items-center gap-1 text-[13px] font-medium text-zinc-600">
+<a class="px-3 py-1.5 rounded-md text-zinc-900 bg-zinc-100/90 font-semibold" href="#classifier">Classifier</a>
+<a class="px-3 py-1.5 rounded-md hover:text-zinc-900 hover:bg-zinc-100/60 transition-colors" href="#pipeline">Architecture</a>
+<a class="px-3 py-1.5 rounded-md hover:text-zinc-900 hover:bg-zinc-100/60 transition-colors" href="#dataset">Taxonomy</a>
+<a class="px-3 py-1.5 rounded-md hover:text-zinc-900 hover:bg-zinc-100/60 transition-colors" href="#about">Research</a>
+</nav>
+<div class="flex items-center gap-3 pl-3 md:border-l md:border-zinc-200">
+<a class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 hover:text-zinc-900 text-[13px] font-medium transition-colors shadow-xs" href="https://github.com" rel="noopener noreferrer" target="_blank">
+<svg class="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path>
+<path d="M9 18c-4.51 2-5-2-7-2"></path>
+</svg>
+<span>GitHub</span>
+</a>
+</div>
+</div>
+</div>
+</header>
+<main class="w-full min-h-screen">
+<div class="max-w-6xl mx-auto px-6 md:px-10 py-10 md:py-16 space-y-20 md:space-y-28">
+<!-- HERO SECTION -->
+<section class="w-full">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+<!-- Left Column: Copy & CTAs -->
+<div class="lg:col-span-7 flex flex-col items-start">
+<div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-white border border-zinc-200 text-zinc-700 text-[12px] font-mono tracking-tight mb-6 shadow-xs">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+<span>INFERENCE ENGINE · CIFAR-100 DENSE CONVNET</span>
+</div>
+<h1 class="text-[36px] md:text-[46px] font-bold tracking-tight leading-[1.12] text-zinc-900 mb-5">
+              See what the network sees.
+            </h1>
+<p class="text-[16px] text-zinc-600 leading-relaxed max-w-xl mb-8">
+              Upload an image and let an optimized convolutional neural network inspect its spatial activations. Inspect categorical distributions, confidence margins, and top alternative classifications in real time.
+            </p>
+<div class="flex flex-wrap items-center gap-3.5">
+<a class="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white text-[14px] font-medium shadow-sm hover:-translate-y-[0.5px] transition-all" href="#classifier">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 7V4h3M20 7V4h-3M4 17v3h3M20 17v3h-3M9 12h6M12 9v6"></path></svg>
+<span>Classify an Image</span>
+</a>
+<a class="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-lg bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800 text-[14px] font-medium shadow-xs transition-colors" href="#pipeline">
+<svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M3 9h6l3 6h9"></path></svg>
+<span>How It Works</span>
+</a>
+</div>
+<!-- Metric micro-strip -->
+<div class="mt-12 pt-8 border-t border-zinc-200 w-full flex items-center gap-8 md:gap-12">
+<div>
+<div class="font-mono text-[22px] font-semibold tracking-tight text-zinc-900">100</div>
+<div class="text-[12px] text-zinc-500 mt-0.5">Fine Categories</div>
+</div>
+<div class="w-px h-8 bg-zinc-200"></div>
+<div>
+<div class="font-mono text-[22px] font-semibold tracking-tight text-zinc-900">32×32</div>
+<div class="text-[12px] text-zinc-500 mt-0.5">Input Matrix</div>
+</div>
+<div class="w-px h-8 bg-zinc-200"></div>
+<div>
+<div class="font-mono text-[22px] font-semibold tracking-tight text-zinc-900">18ms</div>
+<div class="text-[12px] text-zinc-500 mt-0.5">Mean Inference</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Crisp Editorial Technical CNN Flow Diagram -->
+<div class="lg:col-span-5 relative">
+<div class="bg-white rounded-xl border border-zinc-200 p-6 shadow-xs relative">
+<div class="flex items-center justify-between pb-4 mb-4 border-b border-zinc-100">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-sm bg-zinc-900"></span>
+<span class="font-mono text-[11px] font-semibold uppercase tracking-wider text-zinc-800">Feedforward Tensor Pipeline</span>
+</div>
+<span class="font-mono text-[11px] text-zinc-500 bg-zinc-50 px-2 py-0.5 rounded border border-zinc-200">TENSOR EVAL</span>
+</div>
+<!-- Flow stages -->
+<div class="space-y-3">
+<!-- Layer 1 -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-zinc-50/80 border border-zinc-200/70">
+<div class="flex items-center gap-3">
+<div class="w-7 h-7 rounded border border-zinc-200 bg-white font-mono text-[11px] font-semibold flex items-center justify-center text-zinc-700">01</div>
+<div>
+<div class="text-[13px] font-semibold text-zinc-900">Input Matrix</div>
+<div class="text-[11px] text-zinc-500 font-mono">RGB [0.0, 1.0] normalized</div>
+</div>
+</div>
+<span class="font-mono text-[11px] font-medium text-zinc-700 bg-white px-2 py-1 rounded border border-zinc-200">32 × 32 × 3</span>
+</div>
+<!-- Layer 2 -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-zinc-50/80 border border-zinc-200/70">
+<div class="flex items-center gap-3">
+<div class="w-7 h-7 rounded border border-zinc-200 bg-white font-mono text-[11px] font-semibold flex items-center justify-center text-zinc-700">02</div>
+<div>
+<div class="text-[13px] font-semibold text-zinc-900">Conv2D + ReLU</div>
+<div class="text-[11px] text-zinc-500 font-mono">16 Filters (3×3 receptive)</div>
+</div>
+</div>
+<span class="font-mono text-[11px] font-medium text-zinc-700 bg-white px-2 py-1 rounded border border-zinc-200">30 × 30 × 16</span>
+</div>
+<!-- Layer 3 -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-zinc-50/80 border border-zinc-200/70">
+<div class="flex items-center gap-3">
+<div class="w-7 h-7 rounded border border-zinc-200 bg-white font-mono text-[11px] font-semibold flex items-center justify-center text-zinc-700">03</div>
+<div>
+<div class="text-[13px] font-semibold text-zinc-900">MaxPool2D</div>
+<div class="text-[11px] text-zinc-500 font-mono">Spatial stride 2 × 2</div>
+</div>
+</div>
+<span class="font-mono text-[11px] font-medium text-zinc-700 bg-white px-2 py-1 rounded border border-zinc-200">15 × 15 × 16</span>
+</div>
+<!-- Layer 4 -->
+<div class="flex items-center justify-between p-3 rounded-lg bg-zinc-900 text-white border border-zinc-900 shadow-xs">
+<div class="flex items-center gap-3">
+<div class="w-7 h-7 rounded border border-zinc-700 bg-zinc-800 font-mono text-[11px] font-semibold flex items-center justify-center text-zinc-200">04</div>
+<div>
+<div class="text-[13px] font-semibold text-white">Dense Softmax</div>
+<div class="text-[11px] text-zinc-400 font-mono">100-way categorical</div>
+</div>
+</div>
+<span class="font-mono text-[11px] font-medium text-emerald-400 bg-zinc-800 px-2 py-1 rounded border border-zinc-700">p = 0.9428</span>
+</div>
+</div>
+<div class="pt-4 mt-3 border-t border-zinc-100 flex items-center justify-between text-[11px] font-mono text-zinc-500">
+<span>Loss: Categorical Cross-Entropy</span>
+<span>Kernel: He_Normal</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- CLASSIFIER WORKBENCH SECTION -->
+<section class="w-full scroll-mt-24" id="classifier">
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
+<div>
+<span class="font-mono text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+              IMAGE CLASSIFICATION WORKBENCH
+            </span>
+<h2 class="text-[24px] md:text-[28px] font-bold tracking-tight text-zinc-900 mt-1">
+              Upload an image to begin.
+            </h2>
+<p class="text-[14px] text-zinc-600 mt-0.5">
+              The CNN analyzes visual features and predicts one of 100 CIFAR-100 classes.
+            </p>
+</div>
+<!-- Segmented State Switcher Tabs -->
+<div class="flex items-center gap-1 p-1 bg-zinc-100/90 rounded-lg border border-zinc-200 self-start md:self-auto overflow-x-auto">
+<button class="state-tab-btn px-3 py-1.5 rounded-md font-mono text-[12px] transition-all bg-white text-zinc-900 font-medium shadow-xs border border-zinc-200/60" id="btn-state-result" onclick="setClassifierState('result')">
+              Prediction Result
+            </button>
+<button class="state-tab-btn px-3 py-1.5 rounded-md font-mono text-[12px] transition-all text-zinc-500 hover:text-zinc-800" id="btn-state-selected" onclick="setClassifierState('selected')">
+              Image Selected
+            </button>
+<button class="state-tab-btn px-3 py-1.5 rounded-md font-mono text-[12px] transition-all text-zinc-500 hover:text-zinc-800" id="btn-state-loading" onclick="setClassifierState('loading')">
+              Loading / Scan
+            </button>
+<button class="state-tab-btn px-3 py-1.5 rounded-md font-mono text-[12px] transition-all text-zinc-500 hover:text-zinc-800" id="btn-state-empty" onclick="setClassifierState('empty')">
+              Empty State
+            </button>
+<button class="state-tab-btn px-3 py-1.5 rounded-md font-mono text-[12px] transition-all text-zinc-500 hover:text-zinc-800" id="btn-state-error" onclick="setClassifierState('error')">
+              Error State
+            </button>
+</div>
+</div>
+<!-- Main 2-Column Classifier Workspace Card -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 bg-white p-6 md:p-8 rounded-xl border border-zinc-200 shadow-xs">
+<!-- LEFT COLUMN: Input Media / Viewport -->
+<div class="lg:col-span-6 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between pb-3 mb-4 border-b border-zinc-100">
+<div class="flex items-center gap-2">
+<svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+<span class="text-[14px] font-semibold text-zinc-900">Source Matrix</span>
+</div>
+<span class="font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-600 border border-zinc-200/60" id="left-header-badge">
+                  32 × 32 px (Rescaled)
+                </span>
+</div>
+<!-- VIEWPORT CONTAINER -->
+<div class="relative w-full aspect-square bg-[#FAFAF9] rounded-xl border border-zinc-200/80 overflow-hidden flex items-center justify-center p-4">
+<!-- STATE: EMPTY DROP ZONE -->
+<div class="hidden w-full h-full flex flex-col items-center justify-center p-8 text-center rounded-lg border border-dashed border-zinc-300 hover:border-zinc-400 bg-white hover:bg-zinc-50/60 transition-all cursor-pointer group" id="view-empty" onclick="triggerFileSelect()">
+<input accept="image/png,image/jpeg,image/webp" class="hidden" id="file-input-el" onchange="handleFileChange(event)" type="file"/>
+<div class="w-12 h-12 rounded-lg bg-zinc-100 flex items-center justify-center text-zinc-600 mb-3 border border-zinc-200">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" x2="12" y1="3" y2="15"></line></svg>
+</div>
+<h3 class="text-[15px] font-semibold text-zinc-900 mb-1">Drop image to classify</h3>
+<p class="text-[13px] text-zinc-500 mb-4">PNG, JPG or WEBP up to 10MB</p>
+<button class="h-9 px-4 rounded-lg bg-zinc-900 text-white text-[13px] font-medium shadow-xs hover:bg-zinc-800 transition-colors" type="button">
+                    Select File
+                  </button>
+</div>
+<!-- STATE: SELECTED & RESULT CONTAINER -->
+<div class="w-full h-full flex flex-col items-center justify-center relative" id="view-image">
+<!-- Corner Crop Crosshairs -->
+<div class="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-zinc-400 pointer-events-none"></div>
+<div class="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-zinc-400 pointer-events-none"></div>
+<div class="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-zinc-400 pointer-events-none"></div>
+<div class="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-zinc-400 pointer-events-none"></div>
+<!-- Bounding Tag Overlay -->
+<div class="absolute inset-6 rounded border border-zinc-300/80 pointer-events-none transition-all flex flex-col justify-between p-2" id="tensor-detection-box">
+<div class="self-start px-2 py-0.5 rounded bg-zinc-900 text-white font-mono text-[11px] font-medium shadow-xs">
+                      cifar_class: apple [0.9428]
+                    </div>
+<div class="self-end px-2 py-0.5 rounded bg-white/95 text-zinc-700 border border-zinc-200 font-mono text-[11px]">
+                      ROI: (4, 4, 28, 28)
+                    </div>
+</div>
+<!-- Clean image canvas -->
+<div class="w-64 h-64 md:w-72 md:h-72 relative rounded-lg overflow-hidden bg-white border border-zinc-200 shadow-xs flex items-center justify-center">
+<img alt="Classification Target" class="w-full h-full object-cover transition-all" id="preview-image-node" src="https://lh3.googleusercontent.com/aida/AEtjO1UxtM6UphbpOJFoBaSihrwsvDAF-cu3-z9plOHEtWz_Noapuxsb8wVM0Q4tv7YCw8J4zcD7pg_Av6sNH_1VZx2IDxAGgXi2JKJQANYu5pG0OFDJg_nUhW4jccTNe8MrvLy7OptqXza3ccNiOh8scLmQGOx9x5iUnCIXRl3UuAx63KTjPtfgx4J6wvgl2YjMTN9gvt70NDgLfANwibok3YEyUSuFe1SR9Lze9sr2iT41U_lJgWJ3k6gWJw"/>
+<!-- Scanning line for loading state -->
+<div class="hidden absolute left-0 right-0 h-[2px] bg-zinc-900 shadow-sm animate-[bounce_2s_infinite]" id="scanning-laser"></div>
+<!-- Pixel Grid Overlay -->
+<div class="hidden absolute inset-0 bg-[radial-gradient(#18181b_1px,transparent_1px)] [background-size:10px_10px] opacity-20 pointer-events-none" id="pixel-grid-layer"></div>
+</div>
+</div>
+<!-- STATE: ERROR DISPLAY -->
+<div class="hidden w-full h-full flex flex-col items-center justify-center p-8 text-center" id="view-error">
+<div class="w-12 h-12 rounded-lg bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center mb-3">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" x2="12" y1="8" y2="12"></line><line x1="12" x2="12.01" y1="16" y2="16"></line></svg>
+</div>
+<h3 class="text-[15px] font-semibold text-zinc-900 mb-1">Input Matrix Failure</h3>
+<p class="text-[13px] text-zinc-500 max-w-xs">
+                    Tensor channel depth mismatch. Ensure input has 3 valid RGB color dimensions.
+                  </p>
+</div>
+</div>
+</div>
+<!-- Viewport Controls & File Metadata Footer -->
+<div class="mt-4 pt-3 border-t border-zinc-100 flex flex-wrap items-center justify-between gap-3 text-[12px]">
+<div class="flex items-center gap-2">
+<button class="h-8 px-2.5 rounded-md border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 font-mono text-[11px] flex items-center gap-1.5 transition-colors" onclick="togglePixelGrid()">
+<svg class="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="18" rx="2" width="18" x="3" y="3"></rect><path d="M3 9h18M3 15h18M9 3v18M15 3v18"></path></svg>
+<span id="grid-toggle-text">Grid: Off</span>
+</button>
+<button class="h-8 px-2.5 rounded-md border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 font-mono text-[11px] flex items-center gap-1.5 transition-colors" onclick="resetSampleImage()">
+<svg class="w-3.5 h-3.5 text-zinc-500" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"></path></svg>
+<span>Reset Sample</span>
+</button>
+</div>
+<div class="font-mono text-[11px] text-zinc-500 flex items-center gap-2" id="file-meta-strip">
+<span>input_apple_01.png</span>
+<span>·</span>
+<span>142 KB</span>
+</div>
+</div>
+</div>
+<!-- RIGHT COLUMN: Model Telemetry / Inference Card -->
+<div class="lg:col-span-6 flex flex-col justify-between">
+<!-- PANEL: PREDICTION RESULT STATE -->
+<div class="flex flex-col h-full justify-between" id="panel-result">
+<div>
+<div class="flex items-center justify-between pb-3 mb-5 border-b border-zinc-100">
+<span class="font-mono text-[11px] font-semibold text-zinc-600 bg-zinc-100 px-2.5 py-0.5 rounded border border-zinc-200">
+                    INFERENCE COMPLETE · 18ms
+                  </span>
+<span class="flex items-center gap-1.5 font-mono text-[11px] text-emerald-700 font-medium">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    Top-1 Confirmed
+                  </span>
+</div>
+<!-- Primary Predicted Class & Minimalist Radial SVG Gauge -->
+<div class="bg-[#FAFAF9] border border-zinc-200/80 p-5 md:p-6 rounded-xl mb-6 flex items-center justify-between">
+<div>
+<div class="font-mono text-[11px] uppercase tracking-wider text-zinc-400 font-medium mb-1">PREDICTED CLASS</div>
+<h3 class="text-[32px] font-bold tracking-tight text-zinc-900 leading-tight">
+                      Apple
+                    </h3>
+<div class="mt-2 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-white border border-zinc-200 text-zinc-800 font-mono text-[12px] font-medium shadow-xs">
+<svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2.5" viewbox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+<span>94.28% Confidence</span>
+</div>
+</div>
+<!-- Radial SVG Confidence Meter -->
+<div class="relative w-20 h-20 flex items-center justify-center">
+<svg class="w-full h-full -rotate-90" viewbox="0 0 36 36">
+<circle cx="18" cy="18" fill="none" r="15.9155" stroke="#E4E4E7" stroke-width="3"></circle>
+<circle cx="18" cy="18" fill="none" r="15.9155" stroke="#18181B" stroke-dasharray="94.28, 100" stroke-linecap="round" stroke-width="3"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+<span class="font-mono text-[12px] font-bold text-zinc-900">94.3%</span>
+<span class="font-mono text-[9px] text-zinc-400">p-val</span>
+</div>
+</div>
+</div>
+<!-- TOP 5 PREDICTIONS LIST -->
+<div class="space-y-2.5 mb-6">
+<div class="flex items-center justify-between font-mono text-[11px] uppercase tracking-wider text-zinc-400 pb-1">
+<span>Top 5 Alternative Classes</span>
+<span>Softmax Probability</span>
+</div>
+<!-- Class 01: Apple -->
+<div class="p-2.5 rounded-lg bg-zinc-50/80 border border-zinc-200/60 flex flex-col gap-1.5">
+<div class="flex items-center justify-between text-[13px]">
+<span class="font-medium text-zinc-900 flex items-center gap-2">
+<span class="font-mono text-[11px] text-zinc-400">01</span> Apple
+                      </span>
+<span class="font-mono text-[12px] text-zinc-900 font-semibold">94.28%</span>
+</div>
+<div class="w-full h-1.5 bg-zinc-200/70 rounded-full overflow-hidden">
+<div class="h-full bg-zinc-900 rounded-full" style="width: 94.28%;"></div>
+</div>
+</div>
+<!-- Class 02: Orange -->
+<div class="p-2.5 rounded-lg bg-white border border-zinc-200/60 flex flex-col gap-1.5">
+<div class="flex items-center justify-between text-[13px]">
+<span class="font-medium text-zinc-700 flex items-center gap-2">
+<span class="font-mono text-[11px] text-zinc-400">02</span> Orange
+                      </span>
+<span class="font-mono text-[12px] text-zinc-500">2.41%</span>
+</div>
+<div class="w-full h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+<div class="h-full bg-zinc-400 rounded-full" style="width: 14%;"></div>
+</div>
+</div>
+<!-- Class 03: Pear -->
+<div class="p-2.5 rounded-lg bg-white border border-zinc-200/60 flex flex-col gap-1.5">
+<div class="flex items-center justify-between text-[13px]">
+<span class="font-medium text-zinc-700 flex items-center gap-2">
+<span class="font-mono text-[11px] text-zinc-400">03</span> Pear
+                      </span>
+<span class="font-mono text-[12px] text-zinc-500">1.63%</span>
+</div>
+<div class="w-full h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+<div class="h-full bg-zinc-300 rounded-full" style="width: 9%;"></div>
+</div>
+</div>
+<!-- Class 04: Mushroom -->
+<div class="p-2.5 rounded-lg bg-white border border-zinc-200/60 flex flex-col gap-1.5">
+<div class="flex items-center justify-between text-[13px]">
+<span class="font-medium text-zinc-700 flex items-center gap-2">
+<span class="font-mono text-[11px] text-zinc-400">04</span> Mushroom
+                      </span>
+<span class="font-mono text-[12px] text-zinc-500">0.92%</span>
+</div>
+<div class="w-full h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+<div class="h-full bg-zinc-300 rounded-full" style="width: 6%;"></div>
+</div>
+</div>
+<!-- Class 05: Sweet Peppers -->
+<div class="p-2.5 rounded-lg bg-white border border-zinc-200/60 flex flex-col gap-1.5">
+<div class="flex items-center justify-between text-[13px]">
+<span class="font-medium text-zinc-700 flex items-center gap-2">
+<span class="font-mono text-[11px] text-zinc-400">05</span> Sweet Peppers
+                      </span>
+<span class="font-mono text-[12px] text-zinc-500">0.76%</span>
+</div>
+<div class="w-full h-1.5 bg-zinc-100 rounded-full overflow-hidden">
+<div class="h-full bg-zinc-300 rounded-full" style="width: 4%;"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Technical Metadata Footer -->
+<div class="pt-3 border-t border-zinc-100 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-zinc-500">
+<span>Class ID: #00 (Fruit &amp; Veg)</span>
+<span>Loss: 0.124</span>
+<span>Arch: ConvNet-v2.1</span>
+</div>
+</div>
+<!-- PANEL: IMAGE SELECTED STATE -->
+<div class="hidden flex-col justify-center h-full py-8 text-center" id="panel-selected">
+<div class="w-12 h-12 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto mb-4">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+</div>
+<span class="font-mono text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1">TENSOR READY</span>
+<h3 class="text-[20px] font-bold text-zinc-900 mb-2">Image Matrix Loaded</h3>
+<p class="text-[13px] text-zinc-600 max-w-sm mx-auto mb-6">
+                Normalized to float32 spatial tensor (32 × 32 × 3). Ready for convolution forward pass.
+              </p>
+<div class="flex justify-center">
+<button class="h-11 px-6 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white text-[14px] font-medium shadow-sm flex items-center gap-2 transition-all" onclick="simulateRunInference()">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+<span>Run Classification</span>
+</button>
+</div>
+<p class="text-[11px] text-zinc-400 font-mono mt-6">Powered by CIFAR-100 trained model</p>
+</div>
+<!-- PANEL: LOADING / SCANNING STATE -->
+<div class="hidden flex-col justify-center h-full py-8 text-center" id="panel-loading">
+<div class="w-12 h-12 rounded-lg bg-zinc-100 border border-zinc-200 flex items-center justify-center mx-auto mb-4 text-zinc-700 animate-spin">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+</div>
+<span class="font-mono text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-1">INFERENCE PIPELINE</span>
+<h3 class="text-[20px] font-bold text-zinc-900 mb-2">Analyzing tensor...</h3>
+<p class="text-[13px] text-zinc-600 max-w-sm mx-auto mb-6">
+                Extracting local edge descriptors and computing dense categorical activations.
+              </p>
+<div class="space-y-2 max-w-xs mx-auto text-left font-mono text-[11px] text-zinc-600 bg-[#FAFAF9] p-3 rounded-lg border border-zinc-200/70">
+<div class="flex items-center gap-2 text-zinc-900">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+<span>01. Tensor scaling (32×32×3)</span>
+</div>
+<div class="flex items-center gap-2 text-zinc-900">
+<span class="w-1.5 h-1.5 rounded-full bg-zinc-900 animate-pulse"></span>
+<span>02. Feature maps (16 filters)</span>
+</div>
+<div class="flex items-center gap-2 text-zinc-400">
+<span class="w-1.5 h-1.5 rounded-full bg-zinc-300"></span>
+<span>03. Dense classification (100-way)</span>
+</div>
+</div>
+</div>
+<!-- PANEL: EMPTY STATE -->
+<div class="hidden flex-col justify-center h-full py-8 text-center" id="panel-empty">
+<div class="w-12 h-12 rounded-lg bg-zinc-100 border border-zinc-200 flex items-center justify-center mx-auto mb-4 text-zinc-400">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="18" rx="2" ry="2" width="18" x="3" y="3"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+</div>
+<h3 class="text-[20px] font-bold text-zinc-900 mb-2">Awaiting Input Image</h3>
+<p class="text-[13px] text-zinc-600 max-w-sm mx-auto mb-6">
+                Upload or drag a photo on the left to see feedforward classification and probability telemetry.
+              </p>
+<div>
+<button class="font-mono text-[12px] font-medium text-zinc-900 hover:text-zinc-600 underline underline-offset-4" onclick="setClassifierState('result')">
+                  Load Sample Apple Matrix →
+                </button>
+</div>
+</div>
+<!-- PANEL: ERROR STATE -->
+<div class="hidden flex-col justify-center h-full py-8 text-center" id="panel-error">
+<div class="w-12 h-12 rounded-lg bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center mx-auto mb-4">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" x2="12" y1="8" y2="12"></line><line x1="12" x2="12.01" y1="16" y2="16"></line></svg>
+</div>
+<span class="font-mono text-[11px] font-semibold text-rose-600 uppercase tracking-wider mb-1">EXECUTION ERROR</span>
+<h3 class="text-[20px] font-bold text-zinc-900 mb-2">Unable to process tensor</h3>
+<p class="text-[13px] text-zinc-600 max-w-sm mx-auto mb-6">
+                The image dimensions or color profiles could not be decoded. Please retry with another PNG or JPG.
+              </p>
+<div>
+<button class="h-9 px-4 rounded-lg bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-[13px] font-medium transition-colors" onclick="setClassifierState('result')">
+                  Try Again
+                </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- MODEL SPECIFICATIONS BENTO -->
+<section class="w-full" id="model">
+<div class="mb-6">
+<span class="font-mono text-[11px] font-semibold uppercase tracking-wider text-zinc-500">SPECIFICATIONS</span>
+<h2 class="text-[22px] md:text-[24px] font-bold tracking-tight text-zinc-900 mt-1">
+            Model at a glance.
+          </h2>
+<p class="text-[14px] text-zinc-600 mt-0.5">
+            Lightweight convolutional neural network optimized for fast image classification.
+          </p>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+<!-- Card 1 -->
+<div class="bg-white p-5 rounded-xl border border-zinc-200 shadow-xs flex flex-col justify-between">
+<span class="font-mono text-[11px] font-medium text-zinc-400">CATEGORIES</span>
+<div class="my-4">
+<div class="font-mono text-[32px] font-bold text-zinc-900 leading-none">100</div>
+<div class="text-[13px] font-semibold text-zinc-800 mt-1">Fine Classes</div>
+</div>
+<span class="text-[12px] text-zinc-500">20 coarse superclasses</span>
+</div>
+<!-- Card 2 -->
+<div class="bg-white p-5 rounded-xl border border-zinc-200 shadow-xs flex flex-col justify-between">
+<span class="font-mono text-[11px] font-medium text-zinc-400">INPUT MATRIX</span>
+<div class="my-4">
+<div class="font-mono text-[32px] font-bold text-zinc-900 leading-none">32²</div>
+<div class="text-[13px] font-semibold text-zinc-800 mt-1">32 × 32 Px</div>
+</div>
+<span class="text-[12px] text-zinc-500">Standard spatial grid</span>
+</div>
+<!-- Card 3 -->
+<div class="bg-white p-5 rounded-xl border border-zinc-200 shadow-xs flex flex-col justify-between">
+<span class="font-mono text-[11px] font-medium text-zinc-400">IMAGE FORMAT</span>
+<div class="my-4">
+<div class="font-mono text-[32px] font-bold text-zinc-900 leading-none">RGB</div>
+<div class="text-[13px] font-semibold text-zinc-800 mt-1">3 Channels</div>
+</div>
+<span class="text-[12px] text-zinc-500">Normalized [0.0, 1.0]</span>
+</div>
+<!-- Card 4 -->
+<div class="bg-white p-5 rounded-xl border border-zinc-200 shadow-xs flex flex-col justify-between">
+<span class="font-mono text-[11px] font-medium text-zinc-400">TOPOLOGY</span>
+<div class="my-4">
+<div class="font-mono text-[32px] font-bold text-zinc-900 leading-none">CNN</div>
+<div class="text-[13px] font-semibold text-zinc-800 mt-1">Deep ConvNet</div>
+</div>
+<span class="text-[12px] text-zinc-500">Conv2D + MaxPool + Dense</span>
+</div>
+<!-- Card 5 -->
+<div class="bg-white p-5 rounded-xl border border-zinc-200 shadow-xs flex flex-col justify-between col-span-2 md:col-span-1">
+<span class="font-mono text-[11px] font-medium text-zinc-400">TRAINING SET</span>
+<div class="my-4">
+<div class="font-mono text-[32px] font-bold text-zinc-900 leading-none">60k</div>
+<div class="text-[13px] font-semibold text-zinc-800 mt-1">Images Total</div>
+</div>
+<span class="text-[12px] text-zinc-500">50k train / 10k test</span>
+</div>
+</div>
+</section>
+<!-- TECHNICAL PIPELINE -->
+<section class="w-full scroll-mt-24" id="pipeline">
+<div class="mb-6">
+<span class="font-mono text-[11px] font-semibold uppercase tracking-wider text-zinc-500">TECHNICAL PIPELINE</span>
+<h2 class="text-[22px] md:text-[24px] font-bold tracking-tight text-zinc-900 mt-1">
+            From pixels to prediction.
+          </h2>
+<p class="text-[14px] text-zinc-600 mt-0.5 max-w-2xl">
+            A 4-stage convolutional pipeline transforming raw pixel matrices into probabilistic class distributions.
+          </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+<!-- Stage 01 -->
+<div class="bg-white p-6 rounded-xl border border-zinc-200 shadow-xs flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-4">
+<span class="font-mono text-[11px] font-semibold px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 border border-zinc-200">STAGE 01</span>
+<svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><rect height="18" rx="2" width="18" x="3" y="3"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+</div>
+<h3 class="text-[15px] font-bold text-zinc-900 mb-2">Input Matrix</h3>
+<p class="text-[13px] text-zinc-600 leading-relaxed mb-4">
+                Receive a 32 × 32 RGB image and normalize pixel channels from uint8 integers [0-255] to float32 scales [0.0-1.0].
+              </p>
+</div>
+<div class="font-mono text-[11px] text-zinc-600 bg-zinc-50 p-2.5 rounded border border-zinc-200/60">
+              Shape: (1, 32, 32, 3)
+            </div>
+</div>
+<!-- Stage 02 -->
+<div class="bg-white p-6 rounded-xl border border-zinc-200 shadow-xs flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-4">
+<span class="font-mono text-[11px] font-semibold px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 border border-zinc-200">STAGE 02</span>
+<svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24"></path></svg>
+</div>
+<h3 class="text-[15px] font-bold text-zinc-900 mb-2">Convolution</h3>
+<p class="text-[13px] text-zinc-600 leading-relaxed mb-4">
+                Extract edges, textures, shapes and localized patterns using spatial 3×3 receptive field kernels with ReLU activations.
+              </p>
+</div>
+<div class="font-mono text-[11px] text-zinc-600 bg-zinc-50 p-2.5 rounded border border-zinc-200/60">
+              Filter: Conv2D(32, 3×3)
+            </div>
+</div>
+<!-- Stage 03 -->
+<div class="bg-white p-6 rounded-xl border border-zinc-200 shadow-xs flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-4">
+<span class="font-mono text-[11px] font-semibold px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 border border-zinc-200">STAGE 03</span>
+<svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+</div>
+<h3 class="text-[15px] font-bold text-zinc-900 mb-2">Feature Pooling</h3>
+<p class="text-[13px] text-zinc-600 leading-relaxed mb-4">
+                Compress activations to build increasingly compact hierarchical representations while maintaining spatial invariance.
+              </p>
+</div>
+<div class="font-mono text-[11px] text-zinc-600 bg-zinc-50 p-2.5 rounded border border-zinc-200/60">
+              Downsample: MaxPool2D(2×2)
+            </div>
+</div>
+<!-- Stage 04 -->
+<div class="bg-white p-6 rounded-xl border border-zinc-200 shadow-xs flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-4">
+<span class="font-mono text-[11px] font-semibold px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 border border-zinc-200">STAGE 04</span>
+<svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+</div>
+<h3 class="text-[15px] font-bold text-zinc-900 mb-2">Classification</h3>
+<p class="text-[13px] text-zinc-600 leading-relaxed mb-4">
+                Flattened dense layers compute softmax probabilities across all 100 fine categories, producing likelihood distributions.
+              </p>
+</div>
+<div class="font-mono text-[11px] text-zinc-600 bg-zinc-50 p-2.5 rounded border border-zinc-200/60">
+              Dense(100, softmax)
+            </div>
+</div>
+</div>
+</section>
+<!-- CNN EDUCATION / THEORY -->
+<section class="w-full">
+<div class="bg-white border border-zinc-200 p-8 md:p-10 rounded-xl shadow-xs">
+<div class="max-w-2xl mb-8">
+<span class="font-mono text-[11px] font-semibold uppercase tracking-wider text-zinc-500">FOUNDATIONAL THEORY</span>
+<h2 class="text-[22px] md:text-[24px] font-bold tracking-tight text-zinc-900 mt-1 mb-3">
+              Why use a Convolutional Neural Network?
+            </h2>
+<p class="text-[14px] text-zinc-600 leading-relaxed">
+              Unlike standard feedforward multi-layer perceptrons that treat pixel arrays as flat 1D vectors, CNNs preserve 2D topological geometry through localized receptive fields and shared weight matrices.
+            </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="p-5 rounded-lg bg-[#FAFAF9] border border-zinc-200/80">
+<div class="w-8 h-8 rounded border border-zinc-200 bg-white flex items-center justify-center text-zinc-700 mb-3 shadow-xs">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M4 7V4h3M20 7V4h-3M4 17v3h3M20 17v3h-3"></path></svg>
+</div>
+<h3 class="text-[14px] font-bold text-zinc-900 mb-1.5">Local Receptive Fields</h3>
+<p class="text-[13px] text-zinc-600 leading-relaxed">
+                Filters process nearby pixel neighborhoods directly, identifying local edges, gradients, and textures without spatial flattening.
+              </p>
+</div>
+<div class="p-5 rounded-lg bg-[#FAFAF9] border border-zinc-200/80">
+<div class="w-8 h-8 rounded border border-zinc-200 bg-white flex items-center justify-center text-zinc-700 mb-3 shadow-xs">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"></line><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"></line></svg>
+</div>
+<h3 class="text-[14px] font-bold text-zinc-900 mb-1.5">Weight Sharing</h3>
+<p class="text-[13px] text-zinc-600 leading-relaxed">
+                The identical filter weights scan across the entire grid, granting translation invariance and lowering parameter counts.
+              </p>
+</div>
+<div class="p-5 rounded-lg bg-[#FAFAF9] border border-zinc-200/80">
+<div class="w-8 h-8 rounded border border-zinc-200 bg-white flex items-center justify-center text-zinc-700 mb-3 shadow-xs">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+</div>
+<h3 class="text-[14px] font-bold text-zinc-900 mb-1.5">Hierarchical Features</h3>
+<p class="text-[13px] text-zinc-600 leading-relaxed">
+                Early layers capture primitive contours; intermediate layers compose textures; deeper layers resolve semantic classes.
+              </p>
+</div>
+</div>
+</div>
+</section>
+<!-- CIFAR-100 TAXONOMY EXPLORER -->
+<section class="w-full scroll-mt-24" id="dataset">
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-4">
+<div>
+<span class="font-mono text-[11px] font-semibold uppercase tracking-wider text-zinc-500">DATASET TAXONOMY</span>
+<h2 class="text-[22px] md:text-[24px] font-bold tracking-tight text-zinc-900 mt-1">
+              100 classes. One model.
+            </h2>
+<p class="text-[14px] text-zinc-600 mt-0.5 max-w-2xl">
+              CIFAR-100 contains 100 fine-grained categories grouped into 20 cohesive superclasses.
+            </p>
+</div>
+<!-- Search filter -->
+<div class="relative w-full md:w-64">
+<svg class="w-4 h-4 absolute left-3 top-2.5 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" x2="16.65" y1="21" y2="16.65"></line></svg>
+<input class="w-full h-9 pl-9 pr-3 rounded-lg border border-zinc-200 bg-white text-[13px] text-zinc-800 placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-zinc-900 shadow-xs" id="class-search-input" onkeyup="filterClassBadges()" placeholder="Filter categories..." type="text"/>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Superclass 1 -->
+<div class="bg-white p-4 rounded-xl border border-zinc-200 shadow-xs">
+<div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-zinc-100">
+<span class="text-[13px] font-semibold text-zinc-900">Fruit &amp; Vegetables</span>
+<span class="font-mono text-[10px] text-zinc-400">5/5</span>
+</div>
+<div class="flex flex-wrap gap-1.5">
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Apple</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Mushroom</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Orange</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Pear</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Sweet Pepper</span>
+</div>
+</div>
+<!-- Superclass 2 -->
+<div class="bg-white p-4 rounded-xl border border-zinc-200 shadow-xs">
+<div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-zinc-100">
+<span class="text-[13px] font-semibold text-zinc-900">Aquatic Life</span>
+<span class="font-mono text-[10px] text-zinc-400">5/5</span>
+</div>
+<div class="flex flex-wrap gap-1.5">
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Beaver</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Dolphin</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Otter</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Seal</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Whale</span>
+</div>
+</div>
+<!-- Superclass 3 -->
+<div class="bg-white p-4 rounded-xl border border-zinc-200 shadow-xs">
+<div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-zinc-100">
+<span class="text-[13px] font-semibold text-zinc-900">Vehicles (Large)</span>
+<span class="font-mono text-[10px] text-zinc-400">5/5</span>
+</div>
+<div class="flex flex-wrap gap-1.5">
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Bicycle</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Bus</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Motorcycle</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Pickup Truck</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Train</span>
+</div>
+</div>
+<!-- Superclass 4 -->
+<div class="bg-white p-4 rounded-xl border border-zinc-200 shadow-xs">
+<div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-zinc-100">
+<span class="text-[13px] font-semibold text-zinc-900">Large Carnivores</span>
+<span class="font-mono text-[10px] text-zinc-400">5/5</span>
+</div>
+<div class="flex flex-wrap gap-1.5">
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Bear</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Leopard</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Lion</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Tiger</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Wolf</span>
+</div>
+</div>
+<!-- Superclass 5 -->
+<div class="bg-white p-4 rounded-xl border border-zinc-200 shadow-xs">
+<div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-zinc-100">
+<span class="text-[13px] font-semibold text-zinc-900">Scenes &amp; Landscapes</span>
+<span class="font-mono text-[10px] text-zinc-400">5/5</span>
+</div>
+<div class="flex flex-wrap gap-1.5">
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Cloud</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Forest</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Mountain</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Plain</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Sea</span>
+</div>
+</div>
+<!-- Superclass 6 -->
+<div class="bg-white p-4 rounded-xl border border-zinc-200 shadow-xs">
+<div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-zinc-100">
+<span class="text-[13px] font-semibold text-zinc-900">Buildings &amp; Structures</span>
+<span class="font-mono text-[10px] text-zinc-400">5/5</span>
+</div>
+<div class="flex flex-wrap gap-1.5">
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Bridge</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Castle</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">House</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Road</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Skyscraper</span>
+</div>
+</div>
+<!-- Superclass 7 -->
+<div class="bg-white p-4 rounded-xl border border-zinc-200 shadow-xs">
+<div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-zinc-100">
+<span class="text-[13px] font-semibold text-zinc-900">Small Mammals</span>
+<span class="font-mono text-[10px] text-zinc-400">5/5</span>
+</div>
+<div class="flex flex-wrap gap-1.5">
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Hamster</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Mouse</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Rabbit</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Shrew</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Squirrel</span>
+</div>
+</div>
+<!-- Superclass 8 -->
+<div class="bg-white p-4 rounded-xl border border-zinc-200 shadow-xs">
+<div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-zinc-100">
+<span class="text-[13px] font-semibold text-zinc-900">Household Furniture</span>
+<span class="font-mono text-[10px] text-zinc-400">5/5</span>
+</div>
+<div class="flex flex-wrap gap-1.5">
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Bed</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Chair</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Couch</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Table</span>
+<span class="class-pill font-mono text-[11px] px-2 py-0.5 rounded bg-zinc-100 text-zinc-700">Wardrobe</span>
+</div>
+</div>
+</div>
+</section>
+<!-- RESEARCH & ARCHITECTURE -->
+<section class="w-full scroll-mt-24" id="about">
+<div class="bg-white border border-zinc-200 p-8 md:p-10 rounded-xl shadow-xs">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+<div class="lg:col-span-7">
+<span class="font-mono text-[11px] font-semibold uppercase tracking-wider text-zinc-500">RESEARCH &amp; ARCHITECTURE</span>
+<h2 class="text-[22px] md:text-[24px] font-bold tracking-tight text-zinc-900 mt-1 mb-3">
+                Academic AI/ML Project
+              </h2>
+<p class="text-[14px] text-zinc-600 leading-relaxed mb-6">
+                The CIFAR-100 Image Classifier demonstrates how convolutional neural network representations generalize across diverse visual categories under constrained spatial resolutions.
+              </p>
+<div class="space-y-3.5 text-[13px] text-zinc-600">
+<div class="flex items-start gap-2.5">
+<span class="w-1.5 h-1.5 rounded-full bg-zinc-900 mt-2"></span>
+<p><strong class="text-zinc-900">Inference Ready:</strong> Clean asynchronous state architecture ready for integration with a Flask or FastAPI Python backend exposing Keras <code class="font-mono text-[11px] bg-zinc-100 px-1 py-0.5 rounded text-zinc-800">model.predict()</code> endpoints.</p>
+</div>
+<div class="flex items-start gap-2.5">
+<span class="w-1.5 h-1.5 rounded-full bg-zinc-900 mt-2"></span>
+<p><strong class="text-zinc-900">Data Augmentation:</strong> Trained using random spatial rotations, horizontal flips, and channel standardization to prevent catastrophic overfitting on low-resolution inputs.</p>
+</div>
+</div>
+</div>
+<div class="lg:col-span-5 bg-[#FAFAF9] border border-zinc-200/80 p-5 rounded-lg">
+<div class="text-[11px] font-mono font-semibold uppercase tracking-wider text-zinc-500 mb-3">
+                Engineered With
+              </div>
+<div class="flex flex-wrap gap-1.5 mb-4">
+<span class="px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-800 font-mono text-[11px]">TensorFlow</span>
+<span class="px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-800 font-mono text-[11px]">Keras</span>
+<span class="px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-800 font-mono text-[11px]">Python 3.10</span>
+<span class="px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-800 font-mono text-[11px]">NumPy</span>
+<span class="px-2.5 py-1 rounded bg-white border border-zinc-200 text-zinc-800 font-mono text-[11px]">CIFAR-100</span>
+</div>
+<div class="p-3 bg-zinc-900 text-white rounded font-mono text-[11px] space-y-1">
+<div class="text-zinc-400"># CLI validation script</div>
+<div class="text-emerald-400">$ python eval_cifar.py --weights best.h5</div>
+<div class="text-zinc-300 text-[10px]">Top-1 Acc: 78.4% · Top-5 Acc: 93.8%</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- FOOTER -->
+<footer class="w-full border-t border-zinc-200 bg-white py-8 mt-20">
+<div class="max-w-6xl mx-auto px-6 md:px-10 flex flex-col md:flex-row items-center justify-between gap-4 text-[13px] text-zinc-500">
+<div class="flex flex-col md:flex-row md:items-center gap-1 md:gap-3 text-center md:text-left">
+<span class="font-semibold text-zinc-900">CIFAR-100 Classifier</span>
+<span class="hidden md:inline text-zinc-300">·</span>
+<span>Academic AI/ML Project</span>
+</div>
+<div class="flex items-center gap-6 text-[12px] font-mono">
+<a class="hover:text-zinc-900 transition-colors" href="#classifier">Inference Studio</a>
+<a class="hover:text-zinc-900 transition-colors" href="#pipeline">Architecture</a>
+<a class="hover:text-zinc-900 transition-colors" href="#about">Documentation</a>
+</div>
+</div>
+</footer>
+<!-- INTERACTIVE LOGIC -->
+<script>
+    let currentState = 'result';
+    let isGridActive = false;
+
+    function setClassifierState(state) {
+      currentState = state;
+
+      // Update Segmented Tab Buttons
+      document.querySelectorAll('.state-tab-btn').forEach(btn => {
+        btn.className = 'state-tab-btn px-3 py-1.5 rounded-md font-mono text-[12px] transition-all text-zinc-500 hover:text-zinc-800';
+      });
+      const activeBtn = document.getElementById('btn-state-' + state);
+      if (activeBtn) {
+        activeBtn.className = 'state-tab-btn px-3 py-1.5 rounded-md font-mono text-[12px] transition-all bg-white text-zinc-900 font-medium shadow-xs border border-zinc-200/60';
+      }
+
+      // Viewport elements
+      const viewEmpty = document.getElementById('view-empty');
+      const viewImage = document.getElementById('view-image');
+      const viewError = document.getElementById('view-error');
+      const scanningLaser = document.getElementById('scanning-laser');
+      const tensorBox = document.getElementById('tensor-detection-box');
+      const headerBadge = document.getElementById('left-header-badge');
+
+      // Panels
+      ['result', 'selected', 'loading', 'empty', 'error'].forEach(p => {
+        const el = document.getElementById('panel-' + p);
+        if (el) el.classList.add('hidden');
+      });
+
+      const targetPanel = document.getElementById('panel-' + state);
+      if (targetPanel) {
+        targetPanel.classList.remove('hidden');
+        targetPanel.classList.add('flex');
+      }
+
+      if (state === 'empty') {
+        viewEmpty.classList.remove('hidden');
+        viewImage.classList.add('hidden');
+        viewError.classList.add('hidden');
+        headerBadge.textContent = 'Awaiting Upload';
+      } else if (state === 'error') {
+        viewEmpty.classList.add('hidden');
+        viewImage.classList.add('hidden');
+        viewError.classList.remove('hidden');
+        headerBadge.textContent = 'Stream Error';
+      } else if (state === 'loading') {
+        viewEmpty.classList.add('hidden');
+        viewImage.classList.remove('hidden');
+        viewError.classList.add('hidden');
+        scanningLaser.classList.remove('hidden');
+        tensorBox.classList.add('hidden');
+        headerBadge.textContent = 'Evaluating Tensor...';
+      } else if (state === 'selected') {
+        viewEmpty.classList.add('hidden');
+        viewImage.classList.remove('hidden');
+        viewError.classList.add('hidden');
+        scanningLaser.classList.add('hidden');
+        tensorBox.classList.add('hidden');
+        headerBadge.textContent = '32 × 32 px (Unanalyzed)';
+      } else if (state === 'result') {
+        viewEmpty.classList.add('hidden');
+        viewImage.classList.remove('hidden');
+        viewError.classList.add('hidden');
+        scanningLaser.classList.add('hidden');
+        tensorBox.classList.remove('hidden');
+        headerBadge.textContent = '32 × 32 px (Rescaled)';
+      }
+    }
+
+    function togglePixelGrid() {
+      isGridActive = !isGridActive;
+      const gridLayer = document.getElementById('pixel-grid-layer');
+      const toggleLabel = document.getElementById('grid-toggle-text');
+      if (isGridActive) {
+        gridLayer.classList.remove('hidden');
+        toggleLabel.textContent = 'Grid: On';
+      } else {
+        gridLayer.classList.add('hidden');
+        toggleLabel.textContent = 'Grid: Off';
+      }
+    }
+
+    function triggerFileSelect() {
+      const input = document.getElementById('file-input-el');
+      if (input) input.click();
+    }
+
+    function handleFileChange(e) {
+      const file = e.target.files && e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          const preview = document.getElementById('preview-image-node');
+          if (preview) preview.src = evt.target.result;
+          
+          const meta = document.getElementById('file-meta-strip');
+          if (meta) {
+            const kb = (file.size / 1024).toFixed(1);
+            meta.innerHTML = '<span>' + file.name + '</span><span>·</span><span>' + kb + ' KB</span>';
+          }
+          setClassifierState('selected');
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function simulateRunInference() {
+      setClassifierState('loading');
+      setTimeout(() => {
+        setClassifierState('result');
+      }, 1200);
+    }
+
+    function resetSampleImage() {
+      const preview = document.getElementById('preview-image-node');
+      if (preview) {
+        preview.src = "https://lh3.googleusercontent.com/aida/AEtjO1UxtM6UphbpOJFoBaSihrwsvDAF-cu3-z9plOHEtWz_Noapuxsb8wVM0Q4tv7YCw8J4zcD7pg_Av6sNH_1VZx2IDxAGgXi2JKJQANYu5pG0OFDJg_nUhW4jccTNe8MrvLy7OptqXza3ccNiOh8scLmQGOx9x5iUnCIXRl3UuAx63KTjPtfgx4J6wvgl2YjMTN9gvt70NDgLfANwibok3YEyUSuFe1SR9Lze9sr2iT41U_lJgWJ3k6gWJw";
+      }
+      const meta = document.getElementById('file-meta-strip');
+      if (meta) {
+        meta.innerHTML = '<span>input_apple_01.png</span><span>·</span><span>142 KB</span>';
+      }
+      setClassifierState('result');
+    }
+
+    function filterClassBadges() {
+      const query = document.getElementById('class-search-input').value.toLowerCase();
+      const pills = document.querySelectorAll('.class-pill');
+      pills.forEach(pill => {
+        const text = pill.textContent.toLowerCase();
+        if (text.includes(query)) {
+          pill.style.opacity = '1';
+          if (query.length > 0) {
+            pill.classList.add('bg-zinc-900', 'text-white');
+            pill.classList.remove('bg-zinc-100', 'text-zinc-700');
+          } else {
+            pill.classList.remove('bg-zinc-900', 'text-white');
+            pill.classList.add('bg-zinc-100', 'text-zinc-700');
+          }
+        } else {
+          pill.style.opacity = '0.25';
+          pill.classList.remove('bg-zinc-900', 'text-white');
+          pill.classList.add('bg-zinc-100', 'text-zinc-700');
+        }
+      });
+    }
+  </script>
+</body></html>

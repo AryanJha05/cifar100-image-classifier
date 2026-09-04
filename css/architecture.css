@@ -1,0 +1,200 @@
+/* ==========================================================================
+   CIFAR-100 Image Classifier - Architecture Page Styles
+   ========================================================================== */
+
+.arch-hero {
+  margin-bottom: var(--space-12);
+}
+
+/* 4-Stage Pipeline Grid */
+.stages-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .stages-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .stages-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.stage-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-xs);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all var(--transition-fast);
+}
+
+.stage-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.stage-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.stage-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.stage-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: var(--space-4);
+}
+
+.stage-badge-box {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  background-color: var(--bg-surface-subtle);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(228, 228, 231, 0.7);
+}
+
+/* Detailed Layer-by-Layer Architecture Table */
+.arch-table-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+}
+
+.arch-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13px;
+}
+
+.arch-table th {
+  background-color: var(--bg-surface-subtle);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.arch-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--bg-surface-subtle);
+  color: var(--text-primary);
+}
+
+.arch-table tr:last-child td {
+  border-bottom: none;
+}
+
+.arch-table tr:hover td {
+  background-color: rgba(250, 250, 249, 0.8);
+}
+
+.layer-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.layer-tag.conv { background-color: #EEF2FF; color: #3730A3; border: 1px solid #C7D2FE; }
+.layer-tag.pool { background-color: #F0FDF4; color: #15803D; border: 1px solid #BBF7D0; }
+.layer-tag.drop { background-color: #FFFBEB; color: #B45309; border: 1px solid #FDE68A; }
+.layer-tag.dense { background-color: #F4F4F5; color: #18181B; border: 1px solid #E4E4E7; }
+
+/* Interactive Tensor Explorer */
+.tensor-diagram-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-xs);
+}
+
+.tensor-pipeline-visual {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  overflow-x: auto;
+  padding-bottom: var(--space-4);
+}
+
+.tensor-step-node {
+  flex: 0 0 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.tensor-box-graphic {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border-subtle);
+  background-color: var(--bg-surface-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.tensor-step-node:hover .tensor-box-graphic {
+  border-color: var(--primary);
+  color: var(--primary);
+  background-color: var(--primary-light);
+  transform: scale(1.05);
+}
+
+.tensor-arrow {
+  flex: 0 0 24px;
+  color: var(--text-tertiary);
+}
+
+/* Theory Grid */
+.theory-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  theory-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
