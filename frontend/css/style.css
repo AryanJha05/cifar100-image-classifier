@@ -46,25 +46,28 @@ body {
 
 .h1-hero {
   font-family: var(--font-display);
-  font-size: 80px;
-  line-height: 0.95;
-  letter-spacing: -2.46px;
+  font-size: clamp(52px, 6.2vw, 86px);
+  line-height: 0.96;
+  letter-spacing: -2px;
   font-weight: 400;
   color: var(--primary-text);
+  margin-bottom: clamp(16px, 2.2vh, 22px);
 }
 
-@media (max-width: 1024px) {
-  .h1-hero {
-    font-size: 64px;
-    letter-spacing: -1.8px;
-  }
+.hero-description {
+  font-family: var(--font-sans);
+  font-size: clamp(15px, 1.15vw, 17.5px);
+  line-height: 1.625;
+  color: #1e293b;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+  font-weight: 450;
+  letter-spacing: -0.01em;
 }
 
-@media (max-width: 768px) {
-  .h1-hero {
-    font-size: 48px;
-    letter-spacing: -1.2px;
-  }
+.hero-cta-wrapper {
+  margin-top: clamp(26px, 3.5vh, 36px);
 }
 
 /* =============================================================================
@@ -92,6 +95,20 @@ body {
 .btn-pill:hover {
   transform: scale(1.03);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+}
+
+.btn-pill.btn-hero-cta {
+  padding: 16px 44px;
+  font-size: 16px;
+  font-weight: 500;
+  background-color: #000000;
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.btn-pill.btn-hero-cta:hover {
+  transform: scale(1.025);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.32);
 }
 
 .btn-pill.nav-version {
@@ -135,15 +152,13 @@ body {
    ENTRANCE ANIMATIONS
    ============================================================================= */
 .fade-rise {
-  opacity: 0;
-  transform: translateY(24px);
-  animation: fadeRise 0.8s ease-out forwards;
+  animation: fadeRise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes fadeRise {
   from {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -151,9 +166,17 @@ body {
   }
 }
 
-.delay-200 { animation-delay: 0.2s; }
-.delay-400 { animation-delay: 0.4s; }
-.delay-600 { animation-delay: 0.6s; }
+.delay-200 { animation-delay: 0.1s; }
+.delay-400 { animation-delay: 0.2s; }
+.delay-600 { animation-delay: 0.3s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-rise {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
 
 /* =============================================================================
    CLASSIFICATION WORKSPACE CARDS (EDITORIAL GLASS)
@@ -165,6 +188,160 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 24px;
   box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.12), 0 0 1px 1px rgba(255, 255, 255, 0.5) inset;
+}
+
+/* =============================================================================
+   FULL-SCREEN HERO VIEWPORT ARCHITECTURE
+   ============================================================================= */
+.fullscreen-bg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: var(--fallback-bg);
+}
+
+.fullscreen-bg video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 42%;
+}
+
+#main-nav.nav-scrolled {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+.hero-section-container {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding-top: var(--header-height, 72px);
+  padding-bottom: 3vh;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+.hero-content-wrapper {
+  width: 100%;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: auto;
+  margin-bottom: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transform: translateY(-5vh);
+}
+
+@media (max-width: 640px) {
+  .hero-content-wrapper {
+    transform: translateY(-1.5vh);
+  }
+}
+
+/* =============================================================================
+   VIEWPORT-ANCHORED HERO SCROLL INDICATOR
+   ============================================================================= */
+.scroll-indicator-btn {
+  position: absolute;
+  bottom: clamp(28px, 4.8vh, 48px);
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+  width: max-content;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  cursor: pointer;
+  z-index: 20;
+  transition: opacity 0.3s ease;
+}
+
+.scroll-label {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #0f172a;
+  opacity: 0.8;
+  line-height: 1;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.7);
+  transition: opacity 0.3s ease;
+}
+
+.scroll-track {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #0f172a;
+  filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.6));
+  animation: subtleScrollPulse 3s ease-in-out infinite;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.scroll-line {
+  width: 1.5px;
+  height: 32px;
+  background-color: currentColor;
+  opacity: 0.7;
+  border-radius: 9999px;
+}
+
+.scroll-arrow {
+  margin-top: -1px;
+  color: currentColor;
+  opacity: 0.85;
+  display: block;
+}
+
+.scroll-indicator-btn:hover .scroll-label {
+  opacity: 1;
+}
+
+.scroll-indicator-btn:hover .scroll-track {
+  opacity: 1;
+  transform: translateY(3px);
+  animation-play-state: paused;
+}
+
+@keyframes subtleScrollPulse {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(5px);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-track {
+    animation: none !important;
+    opacity: 0.85 !important;
+    transform: none !important;
+  }
 }
 
 /* =============================================================================
