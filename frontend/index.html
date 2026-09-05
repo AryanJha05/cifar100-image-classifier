@@ -4,21 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CIFAR-100 Image Classifier · EfficientNetV2B0</title>
-  <meta name="description" content="Production-grade CIFAR-100 deep learning image classification platform powered by TensorFlow and EfficientNetV2B0.">
+  <meta name="description" content="Instant CIFAR-100 deep learning image classification powered by fine-tuned EfficientNetV2B0 and FastAPI.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
   <!-- =========================================================================
-       HEADER & NAVIGATION
+       HEADER
        ========================================================================= -->
   <header class="site-header">
     <div class="container header-inner">
-      <a href="#classifier" class="brand-link" aria-label="CIFAR-100 Classifier Home">
-        <div class="brand-logo-icon">
+      <div class="brand-group">
+        <div class="brand-logo-icon" aria-hidden="true">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
             <circle cx="8.5" cy="8.5" r="1.5"></circle>
@@ -27,1122 +27,253 @@
         </div>
         <span class="brand-text">CIFAR-100 Classifier</span>
         <span class="brand-tag">EfficientNetV2B0</span>
-      </a>
-
-      <nav class="desktop-nav" aria-label="Main Navigation">
-        <a href="#classifier" class="nav-link active">Classifier</a>
-        <a href="#architecture" class="nav-link">Architecture</a>
-        <a href="#taxonomy" class="nav-link">Taxonomy</a>
-        <a href="#research" class="nav-link">Research</a>
-      </nav>
-
-      <div class="header-actions">
-        <div class="header-divider"></div>
-        <a href="https://github.com/AryanJha05/cifar100-image-classifier" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" aria-label="GitHub Repository">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path>
-            <path d="M9 18c-4.51 2-5-2-7-2"></path>
-          </svg>
-          <span>GitHub</span>
-        </a>
-        <button id="mobile-nav-toggle-btn" class="mobile-nav-toggle" aria-label="Open navigation menu">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-          </svg>
-        </button>
       </div>
-    </div>
 
-    <!-- Mobile Navigation Drawer -->
-    <div id="mobile-menu-drawer" class="mobile-menu-drawer">
-      <a href="#classifier" class="mobile-nav-link">Classifier</a>
-      <a href="#architecture" class="mobile-nav-link">Architecture</a>
-      <a href="#taxonomy" class="mobile-nav-link">Taxonomy</a>
-      <a href="#research" class="mobile-nav-link">Research</a>
-      <a href="https://github.com/AryanJha05/cifar100-image-classifier" target="_blank" rel="noopener noreferrer" class="mobile-nav-link">GitHub Repository ↗</a>
+      <div class="header-status-pill" id="backend-status-pill" title="Backend Health Status">
+        <span class="status-dot status-dot-zinc" id="backend-status-dot"></span>
+        <span id="backend-status-text">Checking Backend...</span>
+      </div>
     </div>
   </header>
 
   <!-- =========================================================================
-       MAIN APPLICATION
+       MAIN CLASSIFIER WORKSPACE
        ========================================================================= -->
   <main class="main-content">
-    <div class="container">
-      
-      <!-- =====================================================================
-           PAGE 1 — CLASSIFIER & HERO SECTION
-           ===================================================================== -->
-      <section class="hero-section" id="hero">
-        <div class="hero-grid">
-          <div class="hero-content">
-            <div class="hero-badge">
-              <span class="status-dot status-dot-emerald"></span>
-              <span>COMPUTER VISION · CIFAR-100 · IMAGE CLASSIFICATION</span>
-            </div>
-            <h1 class="hero-title">See what the network sees.</h1>
-            <p class="hero-desc">
-              Upload any image to receive instant classification from a fine-tuned EfficientNetV2B0 deep convolutional neural network. Inspect softmax probabilities, confidence rankings, and alternative class activations in real time.
-            </p>
-            <div class="hero-actions">
-              <a href="#classifier" class="btn btn-primary btn-lg">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M4 7V4h3M20 7V4h-3M4 17v3h3M20 17v3h-3M9 12h6M12 9v6"></path>
-                </svg>
-                <span>Classify an Image</span>
-              </a>
-              <a href="#architecture" class="btn btn-secondary btn-lg">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="3"></circle>
-                  <path d="M3 9h6l3 6h9"></path>
-                </svg>
-                <span>How It Works</span>
-              </a>
-            </div>
+    <div class="container workspace-container">
 
-            <!-- Project Stats -->
-            <div class="hero-metrics">
-              <div class="metric-item">
-                <span class="metric-val">100</span>
-                <span class="metric-lbl">Classes</span>
-              </div>
-              <div class="metric-divider"></div>
-              <div class="metric-item">
-                <span class="metric-val">96 × 96</span>
-                <span class="metric-lbl">Input Size</span>
-              </div>
-              <div class="metric-divider"></div>
-              <div class="metric-item">
-                <span class="metric-val">RGB</span>
-                <span class="metric-lbl">Image Format</span>
-              </div>
-              <div class="metric-divider"></div>
-              <div class="metric-item">
-                <span class="metric-val">EfficientNetV2B0</span>
-                <span class="metric-lbl">Model</span>
-              </div>
-              <div class="metric-divider"></div>
-              <div class="metric-item">
-                <span class="metric-val">CIFAR-100</span>
-                <span class="metric-lbl">Dataset</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Model Pipeline Visual -->
-          <div class="pipeline-flow-card">
-            <div class="card-header">
-              <div class="card-header-title">
-                <span class="status-dot status-dot-zinc"></span>
-                <span>Model Pipeline Flow</span>
-              </div>
-              <span class="badge badge-neutral">TENSOR EVAL</span>
-            </div>
-            <div class="flow-stages">
-              <div class="flow-stage-row">
-                <div class="flow-stage-left">
-                  <div class="flow-num">01</div>
-                  <div>
-                    <div class="flow-name">Input Image</div>
-                    <div class="flow-sub">RGB matrix [0, 255] float32</div>
-                  </div>
-                </div>
-                <span class="flow-dim">96 × 96 × 3</span>
-              </div>
-              <div class="flow-stage-row">
-                <div class="flow-stage-left">
-                  <div class="flow-num">02</div>
-                  <div>
-                    <div class="flow-name">Data Preprocessing</div>
-                    <div class="flow-sub">Bilinear resize &amp; tensor conversion</div>
-                  </div>
-                </div>
-                <span class="flow-dim">1 × 96 × 96 × 3</span>
-              </div>
-              <div class="flow-stage-row">
-                <div class="flow-stage-left">
-                  <div class="flow-num">03</div>
-                  <div>
-                    <div class="flow-name">EfficientNetV2B0</div>
-                    <div class="flow-sub">ImageNet Transfer Backbone</div>
-                  </div>
-                </div>
-                <span class="flow-dim">3 × 3 × 1280</span>
-              </div>
-              <div class="flow-stage-row">
-                <div class="flow-stage-left">
-                  <div class="flow-num">04</div>
-                  <div>
-                    <div class="flow-name">Global Avg Pooling + BN</div>
-                    <div class="flow-sub">Feature reduction &amp; normalization</div>
-                  </div>
-                </div>
-                <span class="flow-dim">1280-d Vector</span>
-              </div>
-              <div class="flow-stage-row">
-                <div class="flow-stage-left">
-                  <div class="flow-num">05</div>
-                  <div>
-                    <div class="flow-name">Dense(512) + Dropout(0.4)</div>
-                    <div class="flow-sub">Non-linear projection &amp; regularization</div>
-                  </div>
-                </div>
-                <span class="flow-dim">512-d</span>
-              </div>
-              <div class="flow-stage-row highlight-dark">
-                <div class="flow-stage-left">
-                  <div class="flow-num">06</div>
-                  <div>
-                    <div class="flow-name">Dense(100 Softmax)</div>
-                    <div class="flow-sub">Probabilistic class distribution</div>
-                  </div>
-                </div>
-                <span class="flow-dim">100-way</span>
-              </div>
-            </div>
-            <div class="card-footer">
-              <span>Loss: Sparse Categorical Cross-Entropy</span>
-              <span>Optimizer: Adam</span>
-            </div>
-          </div>
+      <!-- WORKSPACE HEADER -->
+      <div class="workspace-header">
+        <div class="workspace-header-text">
+          <span class="workspace-eyebrow">CLASSIFICATION WORKSPACE</span>
+          <h1 class="workspace-title" id="workspace-main-title">Upload an image to begin.</h1>
+          <p class="workspace-desc" id="workspace-main-desc">
+            The trained model analyzes the image and predicts one of the 100 CIFAR-100 classes.
+          </p>
         </div>
-      </section>
+      </div>
 
-      <!-- =====================================================================
-           CLASSIFICATION WORKSPACE (PRIMARY INTERACTION)
-           ===================================================================== -->
-      <section class="section scroll-mt" id="classifier">
-        <div class="workbench-header">
-          <div>
-            <span class="section-eyebrow">CLASSIFICATION WORKSPACE</span>
-            <h2 class="section-title">Upload an image to begin.</h2>
-            <p class="section-desc">
-              The trained model analyzes the image and predicts one of the 100 CIFAR-100 classes.
-            </p>
-          </div>
-          <div class="workbench-status-pill">
-            <span class="status-dot status-dot-emerald" id="backend-status-dot"></span>
-            <span id="backend-status-text">Backend Ready</span>
-          </div>
-        </div>
+      <!-- WORKSPACE CARDS WRAPPER -->
+      <div class="workspace-card-wrapper">
 
         <!-- Hidden Native File Input -->
-        <input type="file" id="file-input-el" accept="image/png,image/jpeg,image/jpg,image/webp" class="hidden" aria-label="Upload image file">
+        <input type="file" id="file-input-el" accept="image/png,image/jpeg,image/jpg" class="hidden" aria-label="Upload image file">
 
         <!-- ===================================================================
-             STATE 1: EMPTY INITIAL DROPZONE
+             STATE 1: EMPTY UPLOAD CARD (Matches reference screenshot)
              =================================================================== -->
-        <div class="card initial-dropzone-card" id="state-empty-container" onclick="triggerFileSelect()">
-          <div class="dropzone-center-content">
-            <div class="dropzone-large-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="card upload-card-dashed" id="state-empty" onclick="triggerFileSelect()">
+          
+          <div class="upload-center-content">
+            <div class="upload-icon-box" aria-hidden="true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <polyline points="17 8 12 3 7 8"></polyline>
                 <line x1="12" y1="3" x2="12" y2="15"></line>
               </svg>
             </div>
-            <h3 class="dropzone-heading">Drop your image here</h3>
-            <p class="dropzone-subheading">or browse from your device</p>
-            <div class="dropzone-meta-pill">
-              <span>Supported formats: JPG, JPEG, PNG</span>
-            </div>
-            <button type="button" class="btn btn-primary btn-md dropzone-browse-btn" onclick="event.stopPropagation(); triggerFileSelect();">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            
+            <h2 class="upload-heading">Drop your image here</h2>
+            <p class="upload-subheading">or browse from your device</p>
+            <span class="upload-formats-text">Supported formats: JPG, JPEG, PNG</span>
+
+            <button type="button" class="btn-browse-files" onclick="event.stopPropagation(); triggerFileSelect();">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
               </svg>
               <span>Browse Files</span>
             </button>
           </div>
 
-          <!-- Quick Test Sample Chips -->
-          <div class="sample-presets-bar" onclick="event.stopPropagation();">
-            <span class="sample-presets-label">Or test with a sample image:</span>
-            <div class="sample-chips-group">
-              <button type="button" class="sample-chip" onclick="loadSampleImage('apple')">🍎 Apple</button>
-              <button type="button" class="sample-chip" onclick="loadSampleImage('dolphin')">🐬 Dolphin</button>
-              <button type="button" class="sample-chip" onclick="loadSampleImage('motorcycle')">🏍️ Motorcycle</button>
+          <div class="upload-divider"></div>
+
+          <div class="sample-section" onclick="event.stopPropagation();">
+            <span class="sample-label">Or test with a sample image:</span>
+            <div class="sample-btn-group">
+              <button type="button" class="sample-btn" onclick="loadSampleImage('apple')">
+                <span class="sample-emoji">🍎</span> Apple
+              </button>
+              <button type="button" class="sample-btn" onclick="loadSampleImage('dolphin')">
+                <span class="sample-emoji">🐬</span> Dolphin
+              </button>
+              <button type="button" class="sample-btn" onclick="loadSampleImage('motorcycle')">
+                <span class="sample-emoji">🏍️</span> Motorcycle
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ===================================================================
+             STATE 2: SELECTED / STAGED PREVIEW CARD
+             =================================================================== -->
+        <div class="card workspace-card hidden" id="state-selected">
+          <div class="active-card-inner">
+            <div class="preview-side">
+              <div class="preview-box">
+                <div class="crop-corner tl"></div>
+                <div class="crop-corner tr"></div>
+                <div class="crop-corner bl"></div>
+                <div class="crop-corner br"></div>
+                <img id="preview-image-node" src="" alt="Staged image preview" class="preview-img">
+              </div>
+              <div class="preview-meta">
+                <span class="preview-filename" id="meta-filename">image.png</span>
+                <span class="meta-dot">·</span>
+                <span class="preview-dims" id="meta-dims">96 × 96 px</span>
+                <span class="meta-dot">·</span>
+                <span class="preview-size" id="meta-filesize">0 KB</span>
+              </div>
+            </div>
+
+            <div class="selected-action-side">
+              <span class="workspace-eyebrow">IMAGE STAGED</span>
+              <h3 class="selected-heading">Selected Image</h3>
+              <p class="selected-desc">
+                Image is ready for model evaluation. Click <strong>Classify Image</strong> to execute the forward pass on the fine-tuned EfficientNetV2B0 network.
+              </p>
+
+              <div class="action-buttons-row">
+                <button type="button" class="btn btn-primary btn-lg" id="btn-classify" onclick="executePrediction()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  <span>Classify Image</span>
+                </button>
+                <button type="button" class="btn btn-secondary btn-lg" onclick="triggerFileSelect()">
+                  <span>Replace Image</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- ===================================================================
-             STATES 2, 3, 4, 5: ACTIVE 2-COLUMN WORKBENCH CARD
+             STATE 3: LOADING INFERENCE CARD
              =================================================================== -->
-        <div class="workbench-card hidden" id="state-active-container">
-          
-          <!-- LEFT COLUMN: Image Viewport -->
-          <div class="viewport-wrapper">
-            <div>
-              <div class="card-header">
-                <span class="card-header-title">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                    <circle cx="12" cy="13" r="4"></circle>
+        <div class="card workspace-card workspace-status-card hidden" id="state-loading">
+          <div class="loading-spinner-box">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin-animation">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+            </svg>
+          </div>
+          <span class="workspace-eyebrow">INFERENCE PIPELINE</span>
+          <h2 class="status-heading">Analyzing image...</h2>
+          <p class="status-desc">Running EfficientNetV2B0 inference</p>
+        </div>
+
+        <!-- ===================================================================
+             STATE 4: PREDICTION RESULT CARD
+             =================================================================== -->
+        <div class="card workspace-card workspace-result-card hidden" id="state-result">
+          <div class="result-header-bar">
+            <span class="badge badge-neutral font-mono">INFERENCE COMPLETE</span>
+            <div class="result-top1-badge">
+              <span class="status-dot status-dot-emerald"></span>
+              <span>Top-1 Confirmed</span>
+            </div>
+          </div>
+
+          <div class="result-content-grid">
+            <!-- Left: Classified Image + Top 1 Predicted Class -->
+            <div class="result-primary-col">
+              <div class="result-img-thumbnail">
+                <img id="result-preview-thumb" src="" alt="Classified thumbnail" class="thumb-img">
+              </div>
+              <div class="result-class-box">
+                <span class="workspace-eyebrow">PREDICTED CLASS</span>
+                <h2 class="result-class-title" id="result-class-name">--</h2>
+                <div class="result-conf-pill" id="result-conf-pill">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
-                  <span id="viewport-title-text">Source Image</span>
-                </span>
-                <span class="badge badge-neutral" id="viewport-header-badge">96 × 96 px</span>
-              </div>
-
-              <!-- Viewport Box -->
-              <div class="viewport-container" id="viewport-box">
-                <div class="crop-corner tl"></div>
-                <div class="crop-corner tr"></div>
-                <div class="crop-corner bl"></div>
-                <div class="crop-corner br"></div>
-
-                <div class="preview-canvas-box">
-                  <img id="preview-image-node" src="" alt="Classification target preview" class="preview-img">
-                  <div class="scanning-laser hidden" id="scanning-laser"></div>
-                  <div class="pixel-grid-layer hidden" id="pixel-grid-layer"></div>
-                </div>
-
-                <div class="viewport-overlay-status" id="viewport-status-tag">
-                  <span class="status-dot status-dot-emerald"></span>
-                  <span id="viewport-status-tag-text">Staged</span>
+                  <span id="result-confidence-text">--% Confidence</span>
                 </div>
               </div>
             </div>
 
-            <!-- Viewport Footer Meta & Utilities -->
-            <div>
-              <div class="viewport-footer">
-                <div class="viewport-btn-group">
-                  <button type="button" class="btn btn-secondary btn-sm" onclick="togglePixelGrid()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-                      <path d="M3 9h18M3 15h18M9 3v18M15 3v18"></path>
-                    </svg>
-                    <span id="grid-toggle-text">Grid: Off</span>
-                  </button>
-                  <button type="button" class="btn btn-secondary btn-sm" onclick="triggerFileSelect()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                      <polyline points="17 8 12 3 7 8"></polyline>
-                      <line x1="12" y1="3" x2="12" y2="15"></line>
-                    </svg>
-                    <span>Replace Image</span>
-                  </button>
-                </div>
-                <div class="viewport-meta" id="file-meta-strip">
-                  <span id="meta-filename">image.png</span>
-                  <span>·</span>
-                  <span id="meta-filesize">0 KB</span>
-                  <span>·</span>
-                  <span id="meta-dims">96 × 96</span>
-                </div>
+            <!-- Right: Top 5 Alternative Predictions List -->
+            <div class="result-top5-col">
+              <div class="top5-header">
+                <span>Top 5 Predictions</span>
+                <span>Confidence</span>
+              </div>
+              <div class="top5-list" id="top5-predictions-container">
+                <!-- Dynamically populated by app.js -->
               </div>
             </div>
-
           </div>
 
-          <!-- RIGHT COLUMN: Dynamic Telemetry & Controls -->
-          <div class="telemetry-wrapper">
-            
-            <!-- SUB-PANEL A: IMAGE SELECTED STATE -->
-            <div class="panel-center-state hidden" id="panel-selected">
-              <div class="state-icon-box state-icon-neutral">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
-              </div>
-              <span class="section-eyebrow">IMAGE STAGED</span>
-              <h3 class="state-title" id="selected-image-title">Ready for Inference</h3>
-              <p class="state-desc" id="selected-image-desc">
-                Image loaded and formatted. Click below to execute the feedforward classification pass on the Python backend.
-              </p>
-              <div class="panel-action-stack">
-                <button type="button" class="btn btn-primary btn-lg w-full" id="btn-predict" onclick="executePrediction()">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                  </svg>
-                  <span>Predict Image</span>
-                </button>
-                <div class="panel-action-row">
-                  <button type="button" class="btn btn-secondary btn-sm" onclick="triggerFileSelect()">
-                    Replace Image
-                  </button>
-                  <button type="button" class="btn btn-secondary btn-sm text-error" onclick="resetToEmptyState()">
-                    Remove
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- SUB-PANEL B: LOADING STATE -->
-            <div class="panel-center-state hidden" id="panel-loading">
-              <div class="state-icon-box state-icon-neutral">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin-icon">
-                  <line x1="12" y1="2" x2="12" y2="6"></line>
-                  <line x1="12" y1="18" x2="12" y2="22"></line>
-                  <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
-                  <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
-                  <line x1="2" y1="12" x2="6" y2="12"></line>
-                  <line x1="18" y1="12" x2="22" y2="12"></line>
-                  <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
-                  <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
-                </svg>
-              </div>
-              <span class="section-eyebrow">INFERENCE PIPELINE</span>
-              <h3 class="state-title">Analyzing image...</h3>
-              <p class="state-desc">
-                Running EfficientNetV2B0 inference and computing 100-class softmax distribution.
-              </p>
-              <div class="loading-steps-box">
-                <div class="loading-step-item" id="loading-step-1">
-                  <span class="status-dot status-dot-emerald"></span>
-                  <span>01. Processing image &amp; tensor conversion</span>
-                </div>
-                <div class="loading-step-item active" id="loading-step-2">
-                  <span class="status-dot status-dot-zinc"></span>
-                  <span>02. Running model (EfficientNetV2B0)</span>
-                </div>
-                <div class="loading-step-item" id="loading-step-3">
-                  <span class="status-dot status-dot-zinc"></span>
-                  <span>03. Preparing prediction &amp; top-5 ranks</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- SUB-PANEL C: PREDICTION RESULT STATE -->
-            <div class="result-telemetry-container hidden" id="panel-result">
-              <div>
-                <div class="card-header">
-                  <span class="badge badge-neutral">INFERENCE COMPLETE</span>
-                  <span class="badge badge-success">
-                    <span class="status-dot status-dot-emerald"></span>
-                    <span>Top-1 Confirmed</span>
-                  </span>
-                </div>
-
-                <!-- Primary Predicted Class & Circular Gauge -->
-                <div class="predicted-class-card">
-                  <div>
-                    <span class="section-eyebrow" style="margin-bottom: 2px;">PREDICTED CLASS</span>
-                    <h3 class="predicted-class-name" id="result-class-name">--</h3>
-                    <div class="confidence-pill" id="result-confidence-val">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="2.5">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
-                      <span id="result-confidence-text">--% Confidence</span>
-                    </div>
-                  </div>
-
-                  <!-- Radial SVG Gauge -->
-                  <div class="radial-gauge">
-                    <svg viewBox="0 0 36 36">
-                      <circle class="gauge-circle-bg" cx="18" cy="18" r="15.9155"></circle>
-                      <circle class="gauge-circle-val" id="gauge-circle-val" cx="18" cy="18" r="15.9155" stroke-dasharray="0, 100"></circle>
-                    </svg>
-                    <div class="gauge-center-text">
-                      <span class="gauge-pct" id="radial-pct-text">0.0%</span>
-                      <span class="gauge-lbl">confidence</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Top 5 Predictions -->
-                <div class="top5-section">
-                  <div class="card-header" style="border-bottom: none; padding-bottom: 4px; margin-bottom: 8px;">
-                    <span class="section-eyebrow">Top 5 Predictions</span>
-                    <span class="section-eyebrow">Softmax Confidence</span>
-                  </div>
-                  <div class="top-predictions-list" id="top5-predictions-container">
-                    <!-- Populated dynamically by app.js -->
-                  </div>
-                </div>
-              </div>
-
-              <!-- Result Footer Actions -->
-              <div>
-                <div class="result-action-bar">
-                  <button type="button" class="btn btn-primary btn-md w-full" onclick="resetToEmptyState()">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                    <span>Classify Another Image</span>
-                  </button>
-                </div>
-
-                <div class="card-footer" id="result-meta-footer">
-                  <span>Model: EfficientNetV2B0</span>
-                  <span id="footer-latency-val">Latency: --ms</span>
-                  <span>Input: 96×96×3</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- SUB-PANEL D: ERROR STATE -->
-            <div class="panel-center-state hidden" id="panel-error">
-              <div class="state-icon-box state-icon-error">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="8" x2="12" y2="12"></line>
-                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </svg>
-              </div>
-              <span class="section-eyebrow text-error">INFERENCE ERROR</span>
-              <h3 class="state-title">Unable to classify this image.</h3>
-              <p class="state-desc" id="error-message-text">
-                Please try again. Ensure the Python backend is running and reachable.
-              </p>
-              <div class="panel-action-row" style="margin-top: 16px;">
-                <button type="button" class="btn btn-primary btn-sm" onclick="executePrediction()">
-                  Try Again
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="triggerFileSelect()">
-                  Choose Another Image
-                </button>
-              </div>
-            </div>
-
+          <!-- Technical Specs Strip -->
+          <div class="technical-strip">
+            <div class="tech-item"><span class="tech-k">Model:</span> <span class="tech-v">EfficientNetV2B0</span></div>
+            <div class="tech-divider"></div>
+            <div class="tech-item"><span class="tech-k">Classes:</span> <span class="tech-v">100 Fine</span></div>
+            <div class="tech-divider"></div>
+            <div class="tech-item"><span class="tech-k">Input:</span> <span class="tech-v">96 × 96 RGB</span></div>
+            <div class="tech-divider"></div>
+            <div class="tech-item"><span class="tech-k">Inference:</span> <span class="tech-v" id="footer-latency-val">-- ms</span></div>
           </div>
 
+          <!-- Action Buttons -->
+          <div class="result-actions-bar">
+            <button type="button" class="btn btn-primary btn-md" onclick="resetToEmptyState()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              <span>Classify Another Image</span>
+            </button>
+            <button type="button" class="btn btn-secondary btn-md" onclick="triggerFileSelect()">
+              <span>Replace Image</span>
+            </button>
+          </div>
         </div>
-      </section>
 
-      <!-- =====================================================================
-           PAGE 2 — ARCHITECTURE
-           ===================================================================== -->
-      <section class="section scroll-mt" id="architecture">
-        <div class="section-header">
-          <span class="section-eyebrow">MODEL ARCHITECTURE</span>
-          <h2 class="section-title">From pixels to prediction.</h2>
-          <p class="section-desc">
-            Exact machine learning pipeline implemented in the training notebook, utilizing transfer learning with EfficientNetV2B0 fine-tuned on CIFAR-100.
+        <!-- ===================================================================
+             STATE 5: ERROR CARD
+             =================================================================== -->
+        <div class="card workspace-card workspace-status-card hidden" id="state-error">
+          <div class="error-icon-box">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+          </div>
+          <span class="workspace-eyebrow text-error">INFERENCE ERROR</span>
+          <h2 class="status-heading">Unable to classify image.</h2>
+          <p class="status-desc" id="error-message-text">
+            Please check your connection and try again.
           </p>
-        </div>
-
-        <!-- 8-Stage Complete Pipeline Grid -->
-        <div class="architecture-grid">
-          
-          <!-- Stage 1 -->
-          <div class="arch-card">
-            <div class="arch-card-header">
-              <span class="badge badge-neutral">01 · INPUT</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21 15 16 10 5 21"></polyline>
-              </svg>
-            </div>
-            <h3 class="arch-title">Input Matrix</h3>
-            <p class="arch-desc">
-              Raw image converted to RGB 3-channel matrix and resized to 96 × 96 spatial resolution.
-            </p>
-            <div class="arch-badge">Shape: (96, 96, 3)</div>
-          </div>
-
-          <!-- Stage 2 -->
-          <div class="arch-card">
-            <div class="arch-card-header">
-              <span class="badge badge-neutral">02 · AUGMENTATION</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24"></path>
-              </svg>
-            </div>
-            <h3 class="arch-title">Data Augmentation</h3>
-            <p class="arch-desc">
-              Keras augmentation layers: RandomFlip, RandomRotation(0.15), RandomZoom(0.15), RandomTranslation(0.1, 0.1), and RandomContrast(0.1).
-            </p>
-            <div class="arch-badge">tf.keras.Sequential</div>
-          </div>
-
-          <!-- Stage 3 -->
-          <div class="arch-card">
-            <div class="arch-card-header">
-              <span class="badge badge-neutral">03 · BACKBONE</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                <polyline points="2 17 12 22 22 17"></polyline>
-                <polyline points="2 12 12 17 22 12"></polyline>
-              </svg>
-            </div>
-            <h3 class="arch-title">EfficientNetV2B0</h3>
-            <p class="arch-desc">
-              Pretrained ImageNet feature extractor utilizing Fused-MBConv and compound coefficient scaling.
-            </p>
-            <div class="arch-badge">Output: (3, 3, 1280)</div>
-          </div>
-
-          <!-- Stage 4 -->
-          <div class="arch-card">
-            <div class="arch-card-header">
-              <span class="badge badge-neutral">04 · POOLING</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="2" y="2" width="20" height="8" rx="2"></rect>
-                <rect x="2" y="14" width="20" height="8" rx="2"></rect>
-                <line x1="6" y1="6" x2="6.01" y2="6"></line>
-                <line x1="6" y1="18" x2="6.01" y2="18"></line>
-              </svg>
-            </div>
-            <h3 class="arch-title">GlobalAveragePooling2D</h3>
-            <p class="arch-desc">
-              Spatial pooling across H×W dimensions, reducing 3D feature maps into a fixed-length feature vector.
-            </p>
-            <div class="arch-badge">Vector: 1280-d</div>
-          </div>
-
-          <!-- Stage 5 -->
-          <div class="arch-card">
-            <div class="arch-card-header">
-              <span class="badge badge-neutral">05 · NORMALIZATION</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="20" x2="18" y2="10"></line>
-                <line x1="12" y1="20" x2="12" y2="4"></line>
-                <line x1="6" y1="20" x2="6" y2="14"></line>
-              </svg>
-            </div>
-            <h3 class="arch-title">BatchNormalization</h3>
-            <p class="arch-desc">
-              Normalizes mini-batch activations to zero mean and unit variance, stabilizing internal covariate shift.
-            </p>
-            <div class="arch-badge">Layer: BatchNorm</div>
-          </div>
-
-          <!-- Stage 6 -->
-          <div class="arch-card">
-            <div class="arch-card-header">
-              <span class="badge badge-neutral">06 · PROJECTION</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-              </svg>
-            </div>
-            <h3 class="arch-title">Dense(512, ReLU)</h3>
-            <p class="arch-desc">
-              Fully connected projection layer with Rectified Linear Unit activation for high-level semantic representation.
-            </p>
-            <div class="arch-badge">Units: 512 ReLU</div>
-          </div>
-
-          <!-- Stage 7 -->
-          <div class="arch-card">
-            <div class="arch-card-header">
-              <span class="badge badge-neutral">07 · REGULARIZATION</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-              </svg>
-            </div>
-            <h3 class="arch-title">Dropout(0.4)</h3>
-            <p class="arch-desc">
-              Randomly zeros 40% of activations during training to break co-adaptation and prevent overfitting on 100 classes.
-            </p>
-            <div class="arch-badge">Rate: 0.40</div>
-          </div>
-
-          <!-- Stage 8 -->
-          <div class="arch-card highlight-card">
-            <div class="arch-card-header">
-              <span class="badge badge-success">08 · SOFTMAX</span>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-              </svg>
-            </div>
-            <h3 class="arch-title">Dense(100, Softmax)</h3>
-            <p class="arch-desc">
-              Final output layer producing normalized probability distribution summing to 1.0 across all 100 CIFAR categories.
-            </p>
-            <div class="arch-badge" style="background-color: #27272A; color: #34D399; border-color: #3F3F46;">Output: 100 Softmax</div>
-          </div>
-
-        </div>
-
-        <!-- Training Strategy Card -->
-        <div class="card training-strategy-card">
-          <div class="section-header" style="margin-bottom: 16px;">
-            <span class="section-eyebrow">TRAINING &amp; OPTIMIZATION REGIME</span>
-            <h3 class="section-title" style="font-size: 1.25rem;">Two-Stage Transfer Learning</h3>
-          </div>
-          <div class="training-grid-2col">
-            <div class="training-col">
-              <div class="training-stage-badge">Phase 1 · Feature Extraction</div>
-              <p class="training-desc">
-                Base EfficientNetV2B0 weights are frozen (<code class="font-mono">base_model.trainable = False</code>). Only the custom classification head is trained using Adam with learning rate <code class="font-mono">1e-3</code>.
-              </p>
-            </div>
-            <div class="training-col">
-              <div class="training-stage-badge">Phase 2 · Fine-Tuning</div>
-              <p class="training-desc">
-                Base model layers are unfrozen (<code class="font-mono">base_model.trainable = True</code>). Entire network is trained end-to-end with low learning rate <code class="font-mono">1e-5</code> and <code class="font-mono">ReduceLROnPlateau</code> to preserve pretrained weights.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- =====================================================================
-           PAGE 3 — TAXONOMY
-           ===================================================================== -->
-      <section class="section scroll-mt" id="taxonomy">
-        <div class="taxonomy-header">
-          <div>
-            <span class="section-eyebrow">CIFAR-100 DATASET TAXONOMY</span>
-            <h2 class="section-title">100 classes. 20 superclasses.</h2>
-            <p class="section-desc">
-              Explore the 100 fine-grained visual categories organized into 20 standardized CIFAR-100 coarse taxonomic groups.
-            </p>
-          </div>
-
-          <div class="search-box-wrapper">
-            <div class="search-box">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"></circle>
-                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-              </svg>
-              <input type="text" id="class-search-input" class="search-input" placeholder="Search 100 classes..." onkeyup="filterClassBadges()" autocomplete="off" aria-label="Search CIFAR-100 classes">
-            </div>
+          <div class="error-actions-group">
+            <button type="button" class="btn btn-primary btn-md" onclick="executePrediction()">
+              Try Again
+            </button>
+            <button type="button" class="btn btn-secondary btn-md" onclick="resetToEmptyState()">
+              Choose Another Image
+            </button>
           </div>
         </div>
 
-        <!-- 20 Standardized CIFAR-100 Superclasses Grid -->
-        <div class="taxonomy-grid">
-          
-          <!-- Superclass 1 -->
-          <div class="superclass-card">
-            <div class="superclass-header">
-              <span class="superclass-title">01 · Aquatic Mammals</span>
-              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
-            </div>
-            <div class="class-pills-wrap">
-              <span class="class-pill">Beaver</span>
-              <span class="class-pill">Dolphin</span>
-              <span class="class-pill">Otter</span>
-              <span class="class-pill">Seal</span>
-              <span class="class-pill">Whale</span>
-            </div>
-          </div>
-
-          <!-- Superclass 2 -->
-          <div class="superclass-card">
-            <div class="superclass-header">
-              <span class="superclass-title">02 · Fish</span>
-              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
-            </div>
-            <div class="class-pills-wrap">
-              <span class="class-pill">Aquarium Fish</span>
-              <span class="class-pill">Flatfish</span>
-              <span class="class-pill">Ray</span>
-              <span class="class-pill">Shark</span>
-              <span class="class-pill">Trout</span>
-            </div>
-          </div>
-
-          <!-- Superclass 3 -->
-          <div class="superclass-card">
-            <div class="superclass-header">
-              <span class="superclass-title">03 · Flowers</span>
-              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
-            </div>
-            <div class="class-pills-wrap">
-              <span class="class-pill">Orchid</span>
-              <span class="class-pill">Poppy</span>
-              <span class="class-pill">Rose</span>
-              <span class="class-pill">Sunflower</span>
-              <span class="class-pill">Tulip</span>
-            </div>
-          </div>
-
-          <!-- Superclass 4 -->
-          <div class="superclass-card">
-            <div class="superclass-header">
-              <span class="superclass-title">04 · Food Containers</span>
-              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
-            </div>
-            <div class="class-pills-wrap">
-              <span class="class-pill">Bottle</span>
-              <span class="class-pill">Bowl</span>
-              <span class="class-pill">Can</span>
-              <span class="class-pill">Cup</span>
-              <span class="class-pill">Plate</span>
-            </div>
-          </div>
-
-          <!-- Superclass 5 -->
-          <div class="superclass-card">
-            <div class="superclass-header">
-              <span class="superclass-title">05 · Fruit &amp; Vegetables</span>
-              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
-            </div>
-            <div class="class-pills-wrap">
-              <span class="class-pill">Apple</span>
-              <span class="class-pill">Mushroom</span>
-              <span class="class-pill">Orange</span>
-              <span class="class-pill">Pear</span>
-              <span class="class-pill">Sweet Pepper</span>
-            </div>
-          </div>
-
-          <!-- Superclass 6 -->
-          <div class="superclass-card">
-            <div class="superclass-header">
-              <span class="superclass-title">06 · Household Electrical</span>
-              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
-            </div>
-            <div class="class-pills-wrap">
-              <span class="class-pill">Clock</span>
-              <span class="class-pill">Keyboard</span>
-              <span class="class-pill">Lamp</span>
-              <span class="class-pill">Telephone</span>
-              <span class="class-pill">Television</span>
-            </div>
-          </div>
-
-          <!-- Superclass 7 -->
-          <div class="superclass-card">
-            <div class="superclass-header">
-              <span class="superclass-title">07 · Household Furniture</span>
-              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
-            </div>
-            <div class="class-pills-wrap">
-              <span class="class-pill">Bed</span>
-              <span class="class-pill">Chair</span>
-              <span class="class-pill">Couch</span>
-              <span class="class-pill">Table</span>
-              <span class="class-pill">Wardrobe</span>
-            </div>
-          </div>
-
-          <!-- Superclass 8 -->
-          <div class="superclass-card">
-            <div class="superclass-header">
-              <span class="superclass-title">08 · Insects</span>
-              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
-            </div>
-            <div class="class-pills-wrap">
-              <span class="class-pill">Bee</span>
-              <span class="class-pill">Beetle</span>
-              <span class="class-pill">Butterfly</span>
-              <span class="class-pill">Caterpillar</span>
-              <span class="class-pill">Cockroach</span>
-            </div>
-          </div>
-
-          <!-- Superclass 9 -->
-          <div class="superclass-card">
-            <div class="superclass-header">
-              <span class="superclass-title">09 · Large Carnivores</span>
-              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
-            </div>
-            <div class="class-pills-wrap">
-              <span class="class-pill">Bear</span>
-              <span class="class-pill">Leopard</span>
-              <span class="class-pill">Lion</span>
-              <span class="class-pill">Tiger</span>
-              <span class="class-pill">Wolf</span>
-            </div>
-          </div>
-
-          <!-- Superclass 10 -->
-          <div class="superclass-card">
-            <div class="superclass-header">
-              <span class="superclass-title">10 · Large Man-Made Outdoor</span>
-              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
-            </div>
-            <div class="class-pills-wrap">
-              <span class="class-pill">Bridge</span>
-              <span class="class-pill">Castle</span>
-              <span class="class-pill">House</span>
-              <span class="class-pill">Road</span>
-              <span class="class-pill">Skyscraper</span>
-            </div>
-          </div>
-
-          <!-- Superclass 11 -->
-          <div class="superclass-card">
-            <div class="superclass-header">
-              <span class="superclass-title">11 · Large Natural Outdoor</span>
-              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
-            </div>
-            <div class="class-pills-wrap">
-              <span class="class-pill">Cloud</span>
-              <span class="class-pill">Forest</span>
-              <span class="class-pill">Mountain</span>
-              <span class="class-pill">Plain</span>
-              <span class="class-pill">Sea</span>
-            </div>
-          </div>
-
-          <!-- Superclass 12 -->
-          <div class="superclass-card">
-            <div class="superclass-header">
-              <span class="superclass-title">12 · Large Herbivores &amp; Omnivores</span>
-              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
-            </div>
-            <div class="class-pills-wrap">
-              <span class="class-pill">Camel</span>
-              <span class="class-pill">Cattle</span>
-              <span class="class-pill">Chimpanzee</span>
-              <span class="class-pill">Elephant</span>
-              <span class="class-pill">Kangaroo</span>
-            </div>
-          </div>
-
-          <!-- Superclass 13 -->
-          <div class="superclass-card">
-            <div class="superclass-header">
-              <span class="superclass-title">13 · Medium-Sized Mammals</span>
-              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
-            </div>
-            <div class="class-pills-wrap">
-              <span class="class-pill">Fox</span>
-              <span class="class-pill">Porcupine</span>
-              <span class="class-pill">Possum</span>
-              <span class="class-pill">Raccoon</span>
-              <span class="class-pill">Skunk</span>
-            </div>
-          </div>
-
-          <!-- Superclass 14 -->
-          <div class="superclass-card">
-            <div class="superclass-header">
-              <span class="superclass-title">14 · Non-Insect Invertebrates</span>
-              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
-            </div>
-            <div class="class-pills-wrap">
-              <span class="class-pill">Crab</span>
-              <span class="class-pill">Lobster</span>
-              <span class="class-pill">Snail</span>
-              <span class="class-pill">Spider</span>
-              <span class="class-pill">Worm</span>
-            </div>
-          </div>
-
-          <!-- Superclass 15 -->
-          <div class="superclass-card">
-            <div class="superclass-header">
-              <span class="superclass-title">15 · People</span>
-              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
-            </div>
-            <div class="class-pills-wrap">
-              <span class="class-pill">Baby</span>
-              <span class="class-pill">Boy</span>
-              <span class="class-pill">Girl</span>
-              <span class="class-pill">Man</span>
-              <span class="class-pill">Woman</span>
-            </div>
-          </div>
-
-          <!-- Superclass 16 -->
-          <div class="superclass-card">
-            <div class="superclass-header">
-              <span class="superclass-title">16 · Reptiles</span>
-              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
-            </div>
-            <div class="class-pills-wrap">
-              <span class="class-pill">Crocodile</span>
-              <span class="class-pill">Dinosaur</span>
-              <span class="class-pill">Lizard</span>
-              <span class="class-pill">Snake</span>
-              <span class="class-pill">Turtle</span>
-            </div>
-          </div>
-
-          <!-- Superclass 17 -->
-          <div class="superclass-card">
-            <div class="superclass-header">
-              <span class="superclass-title">17 · Small Mammals</span>
-              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
-            </div>
-            <div class="class-pills-wrap">
-              <span class="class-pill">Hamster</span>
-              <span class="class-pill">Mouse</span>
-              <span class="class-pill">Rabbit</span>
-              <span class="class-pill">Shrew</span>
-              <span class="class-pill">Squirrel</span>
-            </div>
-          </div>
-
-          <!-- Superclass 18 -->
-          <div class="superclass-card">
-            <div class="superclass-header">
-              <span class="superclass-title">18 · Trees</span>
-              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
-            </div>
-            <div class="class-pills-wrap">
-              <span class="class-pill">Maple Tree</span>
-              <span class="class-pill">Oak Tree</span>
-              <span class="class-pill">Palm Tree</span>
-              <span class="class-pill">Pine Tree</span>
-              <span class="class-pill">Willow Tree</span>
-            </div>
-          </div>
-
-          <!-- Superclass 19 -->
-          <div class="superclass-card">
-            <div class="superclass-header">
-              <span class="superclass-title">19 · Vehicles 1</span>
-              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
-            </div>
-            <div class="class-pills-wrap">
-              <span class="class-pill">Bicycle</span>
-              <span class="class-pill">Bus</span>
-              <span class="class-pill">Motorcycle</span>
-              <span class="class-pill">Pickup Truck</span>
-              <span class="class-pill">Train</span>
-            </div>
-          </div>
-
-          <!-- Superclass 20 -->
-          <div class="superclass-card">
-            <div class="superclass-header">
-              <span class="superclass-title">20 · Vehicles 2</span>
-              <span class="font-mono" style="font-size: 10px; color: var(--text-tertiary);">5/5</span>
-            </div>
-            <div class="class-pills-wrap">
-              <span class="class-pill">Lawn Mower</span>
-              <span class="class-pill">Rocket</span>
-              <span class="class-pill">Streetcar</span>
-              <span class="class-pill">Tank</span>
-              <span class="class-pill">Tractor</span>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      <!-- =====================================================================
-           PAGE 4 — RESEARCH / ABOUT
-           ===================================================================== -->
-      <section class="section scroll-mt" id="research">
-        <div class="section-header">
-          <span class="section-eyebrow">RESEARCH &amp; FOUNDATIONAL THEORY</span>
-          <h2 class="section-title">Understanding the Vision Architecture</h2>
-          <p class="section-desc">
-            An engineering and academic breakdown of CIFAR-100 classification, Convolutional Neural Networks, Transfer Learning, and inference mechanics.
-          </p>
-        </div>
-
-        <div class="research-cards-grid">
-          
-          <!-- Research Topic 1: What is CIFAR-100? -->
-          <div class="card research-card">
-            <div class="research-card-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="2" y="2" width="20" height="20" rx="4"></rect>
-                <path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"></path>
-              </svg>
-            </div>
-            <span class="section-eyebrow">BENCHMARK DATASET</span>
-            <h3 class="research-topic-title">What is CIFAR-100?</h3>
-            <p class="research-topic-text">
-              The CIFAR-100 dataset is an established computer vision benchmark consisting of 60,000 32×32 color images across 100 fine-grained classes (600 images per class: 500 training, 100 test). Unlike CIFAR-10's 10 classes, CIFAR-100 presents substantial inter-class similarity and low sample count per category, making it an ideal testbed for transfer learning and regularization.
-            </p>
-          </div>
-
-          <!-- Research Topic 2: What is a CNN? -->
-          <div class="card research-card">
-            <div class="research-card-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                <polyline points="2 17 12 22 22 17"></polyline>
-                <polyline points="2 12 12 17 22 12"></polyline>
-              </svg>
-            </div>
-            <span class="section-eyebrow">NEURAL TOPOLOGY</span>
-            <h3 class="research-topic-title">What is a CNN &amp; Why It Works</h3>
-            <p class="research-topic-text">
-              Convolutional Neural Networks (CNNs) process grid-structured pixel arrays using learnable filter kernels. CNNs exploit translation equivariance and local spatial correlation. Early layers capture low-level edges and textures, intermediate layers detect object parts and shapes, and deep layers formulate high-level semantic abstractions.
-            </p>
-          </div>
-
-          <!-- Research Topic 3: Why EfficientNetV2? -->
-          <div class="card research-card">
-            <div class="research-card-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <path d="M12 6v6l4 2"></path>
-              </svg>
-            </div>
-            <span class="section-eyebrow">BACKBONE SELECTION</span>
-            <h3 class="research-topic-title">Why EfficientNetV2B0?</h3>
-            <p class="research-topic-text">
-              EfficientNetV2 improves upon standard ConvNets by using Neural Architecture Search (NAS) and compound scaling to optimize accuracy, parameter count, and training latency simultaneously. It introduces Fused-MBConv layers in early stages, accelerating training throughput and delivering state-of-the-art representation with only ~7.1M parameters.
-            </p>
-          </div>
-
-          <!-- Research Topic 4: What is Transfer Learning? -->
-          <div class="card research-card">
-            <div class="research-card-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
-                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
-              </svg>
-            </div>
-            <span class="section-eyebrow">LEARNING PARADIGM</span>
-            <h3 class="research-topic-title">Transfer Learning Mechanics</h3>
-            <p class="research-topic-text">
-              Instead of training from random Gaussian initialization, transfer learning initializes the backbone with weights pre-trained on ImageNet (1.4M images, 1000 classes). We employ a two-stage strategy: first freezing the backbone to train our Dense(512) classification head, then fine-tuning the full network with a tiny learning rate (1e-5) to adapt features to CIFAR-100.
-            </p>
-          </div>
-
-          <!-- Research Topic 5: How Inference Works -->
-          <div class="card research-card" style="grid-column: 1 / -1;">
-            <div class="research-card-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                <line x1="8" y1="21" x2="16" y2="21"></line>
-                <line x1="12" y1="17" x2="12" y2="21"></line>
-              </svg>
-            </div>
-            <span class="section-eyebrow">RUNTIME PIPELINE</span>
-            <h3 class="research-topic-title">How the Backend Performs Inference</h3>
-            <p class="research-topic-text" style="margin-bottom: 16px;">
-              When an image is submitted from the browser, the following end-to-end execution path takes place:
-            </p>
-            <div class="inference-steps-grid">
-              <div class="inf-step">
-                <div class="inf-step-num">Step 1</div>
-                <div class="inf-step-title">Multipart Upload</div>
-                <div class="inf-step-desc">Browser streams raw image bytes via HTTP POST to FastAPI <code class="font-mono">/predict</code>.</div>
-              </div>
-              <div class="inf-step">
-                <div class="inf-step-num">Step 2</div>
-                <div class="inf-step-title">Preprocessing</div>
-                <div class="inf-step-desc">Pillow decodes bytes to RGB, bilinear-resizes to 96×96, and creates a <code class="font-mono">(1, 96, 96, 3)</code> float32 tensor.</div>
-              </div>
-              <div class="inf-step">
-                <div class="inf-step-num">Step 3</div>
-                <div class="inf-step-title">Keras Forward Pass</div>
-                <div class="inf-step-desc">TensorFlow executes inference across <code class="font-mono">best_model.keras</code> producing 100-way logits.</div>
-              </div>
-              <div class="inf-step">
-                <div class="inf-step-num">Step 4</div>
-                <div class="inf-step-title">Softmax &amp; Ranking</div>
-                <div class="inf-step-desc">Softmax probabilities are sorted to extract Top-1 and Top-5 class names with percentage confidence.</div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </section>
+      </div>
 
     </div>
   </main>
 
   <!-- =========================================================================
-       FOOTER
+       MINIMAL FOOTER
        ========================================================================= -->
   <footer class="site-footer">
     <div class="container footer-inner">
-      <div class="footer-brand">
-        <span class="brand-text">CIFAR-100 Classifier</span>
-        <span>·</span>
-        <span>Academic AI/ML Project</span>
-      </div>
-      <div class="footer-links">
-        <a href="#classifier">Classifier</a>
-        <a href="#architecture">Architecture</a>
-        <a href="#taxonomy">Taxonomy</a>
-        <a href="#research">Research</a>
-        <a href="https://github.com/AryanJha05/cifar100-image-classifier" target="_blank" rel="noopener noreferrer">GitHub</a>
-      </div>
+      <p class="footer-copy">
+        CIFAR-100 Image Classifier · EfficientNetV2B0 Transfer Learning · FastAPI Inference
+      </p>
     </div>
   </footer>
 
+  <!-- Main JavaScript Logic -->
   <script src="js/app.js"></script>
 </body>
 </html>

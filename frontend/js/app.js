@@ -1,8 +1,7 @@
 /**
- * CIFAR-100 Image Classifier - Main Application Logic
- * Pure Vanilla JavaScript (No external UI dependencies)
- * Connects to FastAPI Backend (/predict, /health), manages automatic UI state transitions,
- * handles drag-and-drop file staging, and renders real model prediction telemetry.
+ * CIFAR-100 Image Classifier - Client Application
+ * Pure Vanilla JavaScript (Zero external UI dependencies)
+ * Orchestrates image ingestion, real-time backend health, and inference telemetry.
  */
 
 // Backend API Base URL
@@ -22,24 +21,20 @@ let currentState = STATES.EMPTY;
 let currentFile = null;
 let currentImageDataUrl = null;
 let currentImageDims = { width: 96, height: 96 };
-let isPixelGridOn = false;
 
-// Sample Demonstration Presets (Embedded SVG / Data URIs for Instant Testing)
-const SAMPLE_PRESETS = {
+// Real sample images residing in frontend/assets/
+const SAMPLE_FILES = {
   apple: {
-    name: 'sample_apple.png',
-    label: 'Apple',
-    url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><rect width="96" height="96" fill="%23FEF2F2"/><circle cx="48" cy="54" r="30" fill="%23DC2626"/><path d="M48 24 C48 16, 56 12, 56 12" stroke="%2315803D" stroke-width="4" fill="none" stroke-linecap="round"/><ellipse cx="44" cy="50" rx="6" ry="12" fill="%23EF4444"/><ellipse cx="52" cy="50" rx="6" ry="12" fill="%23B91C1C"/></svg>'
+    path: 'assets/sample_apple.png',
+    filename: 'sample_apple.png'
   },
   dolphin: {
-    name: 'sample_dolphin.png',
-    label: 'Dolphin',
-    url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><rect width="96" height="96" fill="%23F0F9FF"/><path d="M18 56 C30 40, 60 38, 78 48 C70 52, 55 58, 38 64 Z" fill="%230284C7"/><polygon points="46,38 54,26 56,38" fill="%230369A1"/><circle cx="68" cy="46" r="2" fill="%23FFFFFF"/></svg>'
+    path: 'assets/sample_dolphin.png',
+    filename: 'sample_dolphin.png'
   },
   motorcycle: {
-    name: 'sample_motorcycle.png',
-    label: 'Motorcycle',
-    url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><rect width="96" height="96" fill="%23F4F4F5"/><circle cx="28" cy="62" r="14" fill="%2327272A"/><circle cx="28" cy="62" r="7" fill="%23F4F4F5"/><circle cx="68" cy="62" r="14" fill="%2327272A"/><circle cx="68" cy="62" r="7" fill="%23F4F4F5"/><polygon points="28,62 48,46 68,62 52,62" fill="%234338CA"/><line x1="48" y1="46" x2="62" y2="34" stroke="%2318181B" stroke-width="4" stroke-linecap="round"/></svg>'
+    path: 'assets/sample_motorcycle.png',
+    filename: 'sample_motorcycle.png'
   }
 };
 
@@ -47,9 +42,10 @@ const SAMPLE_PRESETS = {
    Initialization
    -------------------------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', () => {
-  initMobileNavigation();
   initDropzoneEvents();
   checkBackendHealth();
+  // Poll backend health every 10 seconds
+  setInterval(checkBackendHealth, 10000);
   setApplicationState(STATES.EMPTY);
 });
 
@@ -76,30 +72,10 @@ async function checkBackendHealth() {
 }
 
 /* --------------------------------------------------------------------------
-   Mobile Navigation Drawer
-   -------------------------------------------------------------------------- */
-function initMobileNavigation() {
-  const toggleBtn = document.getElementById('mobile-nav-toggle-btn');
-  const drawer = document.getElementById('mobile-menu-drawer');
-
-  if (toggleBtn && drawer) {
-    toggleBtn.addEventListener('click', () => {
-      drawer.classList.toggle('open');
-    });
-
-    document.querySelectorAll('.mobile-nav-link').forEach(link => {
-      link.addEventListener('click', () => {
-        drawer.classList.remove('open');
-      });
-    });
-  }
-}
-
-/* --------------------------------------------------------------------------
-   Drag-and-Drop & File Input Event Handlers
+   Drag-and-Drop & File Selection Listeners
    -------------------------------------------------------------------------- */
 function initDropzoneEvents() {
-  const dropzone = document.getElementById('state-empty-container');
+  const dropzone = document.getElementById('state-empty');
   const fileInput = document.getElementById('file-input-el');
 
   if (dropzone) {
@@ -145,12 +121,12 @@ function triggerFileSelect() {
 }
 
 /* --------------------------------------------------------------------------
-   File Processing & Staging
+   File Processing & Viewport Staging
    -------------------------------------------------------------------------- */
 function processUploadedFile(file) {
   const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
   if (!validTypes.includes(file.type)) {
-    showErrorState("Unsupported file format. Please upload a JPG, JPEG, or PNG image.");
+    showErrorState("Unsupported file format. Please upload a PNG, JPG, or JPEG image.");
     return;
   }
 
@@ -174,7 +150,7 @@ function processUploadedFile(file) {
         width: tempImg.naturalWidth || 96,
         height: tempImg.naturalHeight || 96
       };
-      updateViewportMetadata(file.name, file.size, currentImageDims);
+      updateStagedMetadata(file.name, file.size, currentImageDims);
       setApplicationState(STATES.SELECTED);
     };
     tempImg.src = currentImageDataUrl;
@@ -183,26 +159,29 @@ function processUploadedFile(file) {
 }
 
 /* --------------------------------------------------------------------------
-   Sample Presets Staging
+   Real Sample Image Loading (from frontend/assets/)
    -------------------------------------------------------------------------- */
 async function loadSampleImage(presetKey) {
-  const preset = SAMPLE_PRESETS[presetKey] || SAMPLE_PRESETS.apple;
+  const preset = SAMPLE_FILES[presetKey] || SAMPLE_FILES.apple;
   
-  // Convert Data URI to File object for backend transmission
   try {
-    const res = await fetch(preset.url);
+    const res = await fetch(preset.path);
+    if (!res.ok) {
+      throw new Error(`Sample image not found at ${preset.path}`);
+    }
     const blob = await res.blob();
-    const file = new File([blob], preset.name, { type: 'image/png' });
+    const file = new File([blob], preset.filename, { type: 'image/png' });
     processUploadedFile(file);
   } catch (err) {
     console.warn("Could not stage sample image:", err);
+    showErrorState(`Unable to load sample image: ${err.message}`);
   }
 }
 
 /* --------------------------------------------------------------------------
-   Viewport Metadata Updater
+   Staged Metadata Updater
    -------------------------------------------------------------------------- */
-function updateViewportMetadata(filename, bytes, dims) {
+function updateStagedMetadata(filename, bytes, dims) {
   const previewImg = document.getElementById('preview-image-node');
   if (previewImg && currentImageDataUrl) {
     previewImg.src = currentImageDataUrl;
@@ -221,82 +200,61 @@ function updateViewportMetadata(filename, bytes, dims) {
   if (dimsEl) {
     dimsEl.textContent = `${dims.width} × ${dims.height} px`;
   }
-
-  const badgeEl = document.getElementById('viewport-header-badge');
-  if (badgeEl) {
-    badgeEl.textContent = `${dims.width} × ${dims.height} px`;
-  }
-
-  const titleEl = document.getElementById('selected-image-title');
-  if (titleEl) {
-    titleEl.textContent = `${filename}`;
-  }
-
-  const descEl = document.getElementById('selected-image-desc');
-  if (descEl) {
-    const kb = (bytes / 1024).toFixed(1);
-    descEl.textContent = `File: ${filename} (${kb} KB). Image staged for 96×96 RGB conversion and CNN inference.`;
-  }
 }
 
 /* --------------------------------------------------------------------------
-   Application State Machine
+   State Machine Management
    -------------------------------------------------------------------------- */
 function setApplicationState(newState) {
   currentState = newState;
 
-  const emptyContainer = document.getElementById('state-empty-container');
-  const activeContainer = document.getElementById('state-active-container');
+  // Workspace card states
+  const stateEmpty = document.getElementById('state-empty');
+  const stateSelected = document.getElementById('state-selected');
+  const stateLoading = document.getElementById('state-loading');
+  const stateResult = document.getElementById('state-result');
+  const stateError = document.getElementById('state-error');
 
-  const panelSelected = document.getElementById('panel-selected');
-  const panelLoading = document.getElementById('panel-loading');
-  const panelResult = document.getElementById('panel-result');
-  const panelError = document.getElementById('panel-error');
+  // Dynamic Workspace header text
+  const mainTitle = document.getElementById('workspace-main-title');
+  const mainDesc = document.getElementById('workspace-main-desc');
 
-  const scanningLaser = document.getElementById('scanning-laser');
-  const statusTagText = document.getElementById('viewport-status-tag-text');
-  const statusTag = document.getElementById('viewport-status-tag');
-
-  // Hide all right panels initially
-  if (panelSelected) panelSelected.classList.add('hidden');
-  if (panelLoading) panelLoading.classList.add('hidden');
-  if (panelResult) panelResult.classList.add('hidden');
-  if (panelError) panelError.classList.add('hidden');
-  if (scanningLaser) scanningLaser.classList.add('hidden');
+  // Hide all cards first
+  if (stateEmpty) stateEmpty.classList.add('hidden');
+  if (stateSelected) stateSelected.classList.add('hidden');
+  if (stateLoading) stateLoading.classList.add('hidden');
+  if (stateResult) stateResult.classList.add('hidden');
+  if (stateError) stateError.classList.add('hidden');
 
   switch (newState) {
     case STATES.EMPTY:
-      if (emptyContainer) emptyContainer.classList.remove('hidden');
-      if (activeContainer) activeContainer.classList.add('hidden');
+      if (stateEmpty) stateEmpty.classList.remove('hidden');
+      if (mainTitle) mainTitle.textContent = 'Upload an image to begin.';
+      if (mainDesc) mainDesc.textContent = 'The trained model analyzes the image and predicts one of the 100 CIFAR-100 classes.';
       break;
 
     case STATES.SELECTED:
-      if (emptyContainer) emptyContainer.classList.add('hidden');
-      if (activeContainer) activeContainer.classList.remove('hidden');
-      if (panelSelected) panelSelected.classList.remove('hidden');
-      if (statusTagText) statusTagText.textContent = 'Staged';
+      if (stateSelected) stateSelected.classList.remove('hidden');
+      if (mainTitle) mainTitle.textContent = 'Selected Image';
+      if (mainDesc) mainDesc.textContent = 'Image staged and ready. Click Classify Image to execute EfficientNetV2B0 inference.';
       break;
 
     case STATES.LOADING:
-      if (emptyContainer) emptyContainer.classList.add('hidden');
-      if (activeContainer) activeContainer.classList.remove('hidden');
-      if (panelLoading) panelLoading.classList.remove('hidden');
-      if (scanningLaser) scanningLaser.classList.remove('hidden');
-      if (statusTagText) statusTagText.textContent = 'Inferring...';
+      if (stateLoading) stateLoading.classList.remove('hidden');
+      if (mainTitle) mainTitle.textContent = 'Analyzing image...';
+      if (mainDesc) mainDesc.textContent = 'Running EfficientNetV2B0 inference pipeline.';
       break;
 
     case STATES.RESULT:
-      if (emptyContainer) emptyContainer.classList.add('hidden');
-      if (activeContainer) activeContainer.classList.remove('hidden');
-      if (panelResult) panelResult.classList.remove('hidden');
-      if (statusTagText) statusTagText.textContent = 'Classified';
+      if (stateResult) stateResult.classList.remove('hidden');
+      if (mainTitle) mainTitle.textContent = 'Prediction';
+      if (mainDesc) mainDesc.textContent = 'Top predictions and classification probabilities generated by fine-tuned EfficientNetV2B0.';
       break;
 
     case STATES.ERROR:
-      if (emptyContainer) emptyContainer.classList.add('hidden');
-      if (activeContainer) activeContainer.classList.remove('hidden');
-      if (panelError) panelError.classList.remove('hidden');
-      if (statusTagText) statusTagText.textContent = 'Notice';
+      if (stateError) stateError.classList.remove('hidden');
+      if (mainTitle) mainTitle.textContent = 'Inference Error';
+      if (mainDesc) mainDesc.textContent = 'Unable to complete image classification.';
       break;
   }
 }
@@ -311,7 +269,9 @@ function resetToEmptyState() {
 
 function showErrorState(message) {
   const errMsg = document.getElementById('error-message-text');
-  if (errMsg) errMsg.textContent = message || "Please try again. Ensure the Python backend is running and reachable.";
+  if (errMsg) {
+    errMsg.textContent = message || "Please check your connection and try again.";
+  }
   setApplicationState(STATES.ERROR);
 }
 
@@ -320,7 +280,7 @@ function showErrorState(message) {
    -------------------------------------------------------------------------- */
 async function executePrediction() {
   if (!currentFile) {
-    showErrorState("No image selected for prediction.");
+    showErrorState("No image selected for prediction. Please upload or select an image first.");
     return;
   }
 
@@ -329,7 +289,7 @@ async function executePrediction() {
   const formData = new FormData();
   formData.append('file', currentFile);
 
-  const startTime = performance.now();
+  const clientStartTime = performance.now();
 
   try {
     const response = await fetch(`${API_BASE_URL}/predict`, {
@@ -337,7 +297,7 @@ async function executePrediction() {
       body: formData
     });
 
-    const elapsedMs = Math.round(performance.now() - startTime);
+    const clientLatency = Math.round(performance.now() - clientStartTime);
 
     if (!response.ok) {
       const errData = await response.json().catch(() => ({ detail: 'Prediction failed' }));
@@ -345,12 +305,14 @@ async function executePrediction() {
     }
 
     const result = await response.json();
-    renderPredictionResults(result, elapsedMs);
+    const effectiveLatency = result.inference_time_ms !== undefined ? result.inference_time_ms : clientLatency;
+    
+    renderPredictionResults(result, effectiveLatency);
     setApplicationState(STATES.RESULT);
 
   } catch (err) {
     console.warn("Prediction execution warning:", err.message);
-    showErrorState(err.message || "Failed to reach inference backend at http://localhost:8000.");
+    showErrorState("Unable to classify image. Please check your connection and try again.");
   }
 }
 
@@ -366,33 +328,33 @@ function renderPredictionResults(result, latencyMs) {
   const top1Name = formatClassName(result.predicted_class);
   const top1Conf = Number(result.confidence || 0);
 
-  // Top Predicted Class
+  // Set thumbnail image to the analyzed image
+  const resultThumb = document.getElementById('result-preview-thumb');
+  if (resultThumb && currentImageDataUrl) {
+    resultThumb.src = currentImageDataUrl;
+  }
+
+  // Top Predicted Class Name
   const nameEl = document.getElementById('result-class-name');
   if (nameEl) nameEl.textContent = top1Name;
 
+  // Confidence Pill Badge
   const confText = document.getElementById('result-confidence-text');
   if (confText) confText.textContent = `${top1Conf.toFixed(2)}% Confidence`;
 
-  // Radial SVG Gauge
-  const radialPct = document.getElementById('radial-pct-text');
-  if (radialPct) radialPct.textContent = `${top1Conf.toFixed(1)}%`;
-
-  const gaugeCircle = document.getElementById('gauge-circle-val');
-  if (gaugeCircle) {
-    gaugeCircle.setAttribute('stroke-dasharray', `${top1Conf}, 100`);
-  }
-
-  // Latency & Meta Footer
+  // Technical Summary Footer Latency
   const latencyEl = document.getElementById('footer-latency-val');
   if (latencyEl) {
-    latencyEl.textContent = `Latency: ${latencyMs}ms`;
+    latencyEl.textContent = `${latencyMs} ms`;
   }
 
   // Render Top-5 Predictions List
   const top5Container = document.getElementById('top5-predictions-container');
-  if (top5Container && result.top_predictions) {
-    top5Container.innerHTML = result.top_predictions.map((item, idx) => {
-      const rankStr = `0${idx + 1}`;
+  const predictions = result.top_predictions || result.top_5 || [];
+  
+  if (top5Container && predictions.length > 0) {
+    top5Container.innerHTML = predictions.slice(0, 5).map((item, idx) => {
+      const rankNum = idx + 1;
       const className = formatClassName(item.class_name);
       const confNum = Number(item.confidence || 0);
       const barWidth = `${Math.min(100, Math.max(2, confNum))}%`;
@@ -402,7 +364,7 @@ function renderPredictionResults(result, latencyMs) {
         <div class="prediction-row ${isTop ? 'top-rank' : ''}">
           <div class="pred-row-header">
             <span class="pred-class-label">
-              <span class="pred-rank-num">${rankStr}</span> ${className}
+              <span class="pred-rank-num">${rankNum}.</span> ${className}
             </span>
             <span class="pred-prob-val">${confNum.toFixed(2)}%</span>
           </div>
@@ -413,51 +375,4 @@ function renderPredictionResults(result, latencyMs) {
       `;
     }).join('');
   }
-}
-
-/* --------------------------------------------------------------------------
-   Pixel Grid Toggle Utility
-   -------------------------------------------------------------------------- */
-function togglePixelGrid() {
-  isPixelGridOn = !isPixelGridOn;
-  const grid = document.getElementById('pixel-grid-layer');
-  const label = document.getElementById('grid-toggle-text');
-  
-  if (grid) {
-    if (isPixelGridOn) {
-      grid.classList.remove('hidden');
-      if (label) label.textContent = 'Grid: On';
-    } else {
-      grid.classList.add('hidden');
-      if (label) label.textContent = 'Grid: Off';
-    }
-  }
-}
-
-/* --------------------------------------------------------------------------
-   Taxonomy Class Filter / Search
-   -------------------------------------------------------------------------- */
-function filterClassBadges() {
-  const searchInput = document.getElementById('class-search-input');
-  const query = (searchInput?.value || '').toLowerCase().trim();
-  const pills = document.querySelectorAll('.class-pill');
-
-  pills.forEach(pill => {
-    const text = pill.textContent.toLowerCase();
-    if (text.includes(query)) {
-      pill.classList.remove('dimmed');
-      if (query.length > 0) {
-        pill.classList.add('highlighted');
-      } else {
-        pill.classList.remove('highlighted');
-      }
-    } else {
-      if (query.length > 0) {
-        pill.classList.add('dimmed');
-        pill.classList.remove('highlighted');
-      } else {
-        pill.classList.remove('dimmed', 'highlighted');
-      }
-    }
-  });
 }

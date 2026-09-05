@@ -7,6 +7,7 @@ Strictly synchronized with the trained ML notebook architecture (EfficientNetV2B
 import io
 import json
 import os
+import time
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -76,7 +77,9 @@ def predict_image(image_bytes: bytes) -> Dict[str, Any]:
 
     try:
         model = get_model()
+        t0 = time.perf_counter()
         prediction = model.predict(input_tensor, verbose=0)
+        inference_time_ms = round((time.perf_counter() - t0) * 1000, 1)
     except FileNotFoundError as e:
         raise e
     except Exception as e:
@@ -100,4 +103,9 @@ def predict_image(image_bytes: bytes) -> Dict[str, Any]:
         "predicted_class": str(class_names[predicted_idx]),
         "confidence": round(confidence, 2),
         "top_predictions": top_predictions,
+        "top_5": top_predictions,
+        "model": "EfficientNetV2B0",
+        "classes": NUM_CLASSES,
+        "input_resolution": f"{IMG_SIZE}x{IMG_SIZE} RGB",
+        "inference_time_ms": inference_time_ms,
     }
