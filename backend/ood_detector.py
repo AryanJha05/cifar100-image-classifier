@@ -38,120 +38,208 @@ class OODDetector:
        classifier from hallucinating confident answers on arbitrary user uploads.
     """
 
-    def __init__(self, prototypes_path: Optional[str] = None):
+    def __init__(
+        self,
+        prototypes_path: Optional[str] = None,
+        backbone_prototypes_path: Optional[str] = None
+    ):
         self.prototypes_path = prototypes_path or str(ood_config.PROTOTYPES_PATH)
-        self._prototypes: Optional[np.ndarray] = None
+        self.backbone_prototypes_path = backbone_prototypes_path or str(ood_config.BACKBONE_PROTOTYPES_PATH)
+        self._dense_prototypes: Optional[np.ndarray] = None
+        self._backbone_prototypes: Optional[np.ndarray] = None
         self._load_prototypes()
 
     def _load_prototypes(self) -> None:
-        """Load and cache the precomputed 100x512 prototype matrix."""
+        """Load and cache the precomputed dense (512) and backbone (1280) prototype matrices."""
+        # 1. Load dense prototypes
         try:
             prototypes = np.load(self.prototypes_path)
-            if prototypes.ndim != 2 or prototypes.shape[0] != 100:
-                raise ValueError(
-                    f"Expected prototypes shape (100, D), got {prototypes.shape}"
+            if prototypes.ndim == 2 and prototypes.shape[0] == 100:
+                norms = np.linalg.norm(prototypes, axis=1, keepdims=True)
+                norms[norms == 0] = 1e-10
+                self._dense_prototypes = prototypes / norms
+                logger.info(
+                    f"Successfully loaded {self._dense_prototypes.shape[0]} dense class prototypes "
+                    f"(dim={self._dense_prototypes.shape[1]}) from {self.prototypes_path}"
                 )
-            
-            # Ensure all prototypes are strictly unit-length normalized
-            norms = np.linalg.norm(prototypes, axis=1, keepdims=True)
-            norms[norms == 0] = 1e-10
-            self._prototypes = prototypes / norms
-            logger.info(
-                f"Successfully loaded {self._prototypes.shape[0]} class prototypes "
-                f"(dim={self._prototypes.shape[1]}) from {self.prototypes_path}"
-            )
         except Exception as e:
-            logger.warning(
-                f"Could not load OOD prototypes from {self.prototypes_path}: {e}. "
-                "OOD feature-based rejection will fall back to confidence check."
-            )
-            self._prototypes = None
+            logger.warning(f"Could not load dense prototypes: {e}")
+            self._dense_prototypes = None
+
+        # 2. Load backbone prototypes
+        try:
+            backbone_protos = np.load(self.backbone_prototypes_path)
+            if backbone_protos.ndim == 2 and backbone_protos.shape[0] == 100:
+                norms = np.linalg.norm(backbone_protos, axis=1, keepdims=True)
+                norms[norms == 0] = 1e-10
+                self._backbone_prototypes = backbone_protos / norms
+                logger.info(
+                    f"Successfully loaded {self._backbone_prototypes.shape[0]} backbone class prototypes "
+                    f"(dim={self._backbone_prototypes.shape[1]}) from {self.backbone_prototypes_path}"
+                )
+        except Exception as e:
+            logger.warning(f"Could not load backbone prototypes: {e}")
+            self._backbone_prototypes = None
 
     @property
     def is_initialized(self) -> bool:
-        return self._prototypes is not None
+        return self._dense_prototypes is not None or self._backbone_prototypes is not None
 
-    def compute_similarity(self, embedding: np.ndarray) -> Tuple[float, int, np.ndarray]:
+    def compute_similarity(
+        self,
+        embedding: np.ndarray,
+        use_backbone: bool = False
+    ) -> Tuple[float, int, np.ndarray]:
         """
-        Compute cosine similarity between the query embedding and all 100 class prototypes.
-
-        Args:
-            embedding: 1D NumPy array of shape (512,) or 2D array of shape (1, 512).
-
-        Returns:
-            max_sim: Maximum cosine similarity across all 100 classes (float in [-1, 1]).
-            nearest_idx: Index of the class prototype with highest similarity (0-99).
-            all_sims: 1D array of length 100 containing cosine similarities to all classes.
+        Compute cosine similarity between the query embedding and class prototypes.
         """
-        if self._prototypes is None:
+        protos = self._backbone_prototypes if use_backbone else self._dense_prototypes
+        if protos is None:
             return 1.0, 0, np.ones(100, dtype=np.float32)
 
         emb = np.squeeze(embedding).astype(np.float32)
         norm = np.linalg.norm(emb)
         if norm == 0:
-            return 0.0, 0, np.zeros(self._prototypes.shape[0], dtype=np.float32)
+            return 0.0, 0, np.zeros(protos.shape[0], dtype=np.float32)
 
         norm_emb = emb / norm
-        similarities = np.dot(self._prototypes, norm_emb)
+        similarities = np.dot(protos, norm_emb)
         nearest_idx = int(np.argmax(similarities))
         max_sim = float(similarities[nearest_idx])
 
         return max_sim, nearest_idx, similarities
 
+    @staticmethod
+    def evaluate_image_domain(pil_img: Any) -> Tuple[bool, Optional[str]]:
+        """
+        Evaluate natural photographic image domain criteria:
+        1. Degenerate / blank content (uniform pixel values)
+        2. Digital vector flatness (UI screenshot / diagram / document flat fields)
+        3. Digital graphic step edges (app icons / vector logos / rendered text)
+        4. Synthetic color gamut & vector fills (electric neon saturation)
+        5. Synthetic mathematical linear gradient (zero photographic texture noise)
+        6. Extreme background clipping (pure digital white or black canvas)
+        """
+        if pil_img is None:
+            return True, None
+
+        arr = np.array(pil_img.convert("RGB").resize((96, 96)), dtype=np.float32) / 255.0
+
+        # 1. Variance / Degeneracy
+        stds = np.std(arr * 255.0, axis=(0, 1))
+        if np.all(stds < ood_config.MIN_CHANNEL_STD):
+            return False, "Degenerate image: uniform or blank content"
+
+        # 2. Digital Gradients
+        gx = np.abs(arr[:, 1:, :] - arr[:, :-1, :])
+        gy = np.abs(arr[1:, :, :] - arr[:-1, :, :])
+        gx_c = gx[:-1, :, :]
+        gy_c = gy[:, :-1, :]
+
+        # 3. Digital Vector Flatness (fraction of adjacent pixels with diff <= 1.5/255)
+        flat_ratio = float((np.mean(gx_c < 1.5 / 255.0) + np.mean(gy_c < 1.5 / 255.0)) / 2.0)
+        if flat_ratio > ood_config.MAX_DIGITAL_FLATNESS:
+            return False, f"Digital vector/UI flatness ({flat_ratio:.2f} > {ood_config.MAX_DIGITAL_FLATNESS:.2f})"
+
+        # 4. Digital Graphic Step Edges (sharp vector contours, text glyphs, app icon outlines)
+        step_grad = float(np.mean((gx_c > 0.25) | (gy_c > 0.25)))
+        if step_grad > ood_config.MAX_STEP_GRADIENT:
+            return False, f"Digital graphic/icon step edges ({step_grad:.3f} > {ood_config.MAX_STEP_GRADIENT:.3f})"
+
+        # 5. Synthetic Color Gamut & Flat Vector Rendering
+        r, g, b = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
+        mx = np.maximum(np.maximum(r, g), b)
+        mn = np.minimum(np.minimum(r, g), b)
+        s = (mx - mn) / (mx + 1e-6)
+        sat_75 = float(np.mean(s > 0.75))
+        if sat_75 > ood_config.SYNTHETIC_SAT_THRESHOLD and flat_ratio > ood_config.SYNTHETIC_FLAT_THRESHOLD:
+            return False, f"Synthetic graphic color and flat vector rendering (sat={sat_75:.2f}, flat={flat_ratio:.2f})"
+
+        # 6. Synthetic Linear Color Gradient (curvature / second derivative variance)
+        d2_x = np.abs(arr[:, 2:, :] - 2 * arr[:, 1:-1, :] + arr[:, :-2, :])
+        d2_y = np.abs(arr[2:, :, :] - 2 * arr[1:-1, :, :] + arr[:-2, :, :])
+        lap_var = float(np.var(d2_x) + np.var(d2_y))
+        if lap_var < 1e-5 and flat_ratio > 0.50:
+            return False, "Synthetic artificial gradient: zero photographic texture noise"
+
+        # 7. Extreme Digital Canvas Clipping
+        extreme = float(np.mean((mx < 0.04) | (mn > 0.96)))
+        if extreme > ood_config.MAX_EXTREME_CLIPPING:
+            return False, f"Excessive digital background clipping ({extreme:.2f} > {ood_config.MAX_EXTREME_CLIPPING:.2f})"
+
+        return True, None
+
     def evaluate(
         self,
-        embedding: np.ndarray,
+        dense_embedding: np.ndarray,
         confidence: float,
-        sim_threshold: Optional[float] = None,
+        backbone_embedding: Optional[np.ndarray] = None,
+        pil_img: Optional[Any] = None,
+        dense_sim_threshold: Optional[float] = None,
+        backbone_sim_threshold: Optional[float] = None,
         conf_threshold: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
-        Evaluate dual-layer OOD criteria on query embedding and prediction confidence.
-
-        Args:
-            embedding: 512-dimensional feature vector from penultimate layer `dense_512`.
-            confidence: Model's top-1 softmax prediction confidence (0-100%).
-            sim_threshold: Optional override for prototype similarity threshold.
-            conf_threshold: Optional override for confidence threshold.
-
-        Returns:
-            dict containing:
-                - is_valid (bool): True if accepted as CIFAR-100, False if rejected.
-                - max_similarity (float): Cosine similarity to nearest prototype.
-                - nearest_proto_idx (int): Nearest class prototype index.
-                - confidence (float): Top-1 prediction confidence.
-                - reasons (list[str]): Explanation reasons if rejected.
+        Evaluate multi-scale OOD criteria:
+        1. Natural photographic image domain check (rejects UI, screenshots, icons, text, synthetic graphics)
+        2. Convolutional backbone prototype similarity (captures natural visual manifold membership)
+        3. Penultimate dense prototype similarity (captures class-specific semantic alignment)
+        4. Prediction confidence (guarantees categorical clarity)
         """
-        t_sim = sim_threshold if sim_threshold is not None else ood_config.SIMILARITY_THRESHOLD
+        t_dense = dense_sim_threshold if dense_sim_threshold is not None else ood_config.DENSE_SIMILARITY_THRESHOLD
+        t_backbone = backbone_sim_threshold if backbone_sim_threshold is not None else ood_config.BACKBONE_SIMILARITY_THRESHOLD
         t_conf = conf_threshold if conf_threshold is not None else ood_config.CONFIDENCE_THRESHOLD
 
-        max_sim, nearest_idx, _ = self.compute_similarity(embedding)
-
         reasons = []
-        is_sim_valid = True
+        is_domain_valid = True
+        is_dense_valid = True
+        is_backbone_valid = True
         is_conf_valid = True
 
-        if self._prototypes is not None:
-            if max_sim < t_sim:
-                is_sim_valid = False
+        # Check natural photographic image domain
+        if pil_img is not None:
+            domain_ok, domain_reason = self.evaluate_image_domain(pil_img)
+            if not domain_ok:
+                is_domain_valid = False
+                reasons.append(domain_reason)
+
+        dense_max_sim, nearest_idx, _ = self.compute_similarity(dense_embedding, use_backbone=False)
+
+        # Check dense prototype similarity
+        if self._dense_prototypes is not None:
+            if dense_max_sim < t_dense:
+                is_dense_valid = False
                 reasons.append(
-                    f"Feature similarity ({max_sim:.3f}) below threshold ({t_sim:.3f})"
+                    f"Semantic similarity ({dense_max_sim:.3f}) below threshold ({t_dense:.3f})"
                 )
 
+        # Check convolutional backbone prototype similarity
+        backbone_max_sim = 1.0
+        if backbone_embedding is not None and self._backbone_prototypes is not None:
+            backbone_max_sim, _, _ = self.compute_similarity(backbone_embedding, use_backbone=True)
+            if backbone_max_sim < t_backbone:
+                is_backbone_valid = False
+                reasons.append(
+                    f"Visual feature similarity ({backbone_max_sim:.3f}) below threshold ({t_backbone:.3f})"
+                )
+
+        # Check softmax confidence
         if confidence < t_conf:
             is_conf_valid = False
             reasons.append(
                 f"Prediction confidence ({confidence:.1f}%) below threshold ({t_conf:.1f}%)"
             )
 
-        is_valid = is_sim_valid and is_conf_valid
+        is_valid = is_domain_valid and is_dense_valid and is_backbone_valid and is_conf_valid
 
         return {
             "is_valid": is_valid,
-            "max_similarity": round(max_sim, 4),
+            "max_similarity": round(dense_max_sim, 4),
+            "backbone_similarity": round(backbone_max_sim, 4),
             "nearest_proto_idx": nearest_idx,
             "confidence": round(confidence, 2),
-            "sim_threshold": t_sim,
+            "dense_threshold": t_dense,
+            "backbone_threshold": t_backbone,
             "conf_threshold": t_conf,
             "reasons": reasons,
             "message": None if is_valid else ood_config.REJECTION_MESSAGE,

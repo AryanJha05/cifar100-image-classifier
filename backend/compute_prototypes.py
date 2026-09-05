@@ -57,14 +57,16 @@ def main():
     full_model = tf.keras.models.load_model(str(MODEL_PATH))
     
     dense_layer = full_model.get_layer("dense_512")
-    embedding_dim = dense_layer.output.shape[-1]
-    print(f"Feature layer: {dense_layer.name}, Embedding dimension: {embedding_dim}")
+    pool_layer = full_model.get_layer("avg_pool")
+    dense_dim = dense_layer.output.shape[-1]
+    pool_dim = pool_layer.output.shape[-1]
+    print(f"Feature layers: {dense_layer.name} ({dense_dim}-d), {pool_layer.name} ({pool_dim}-d)")
 
-    # Feature extractor
+    # Dual feature extractor
     feature_extractor = tf.keras.Model(
         inputs=full_model.inputs,
-        outputs=dense_layer.output,
-        name="feature_extractor"
+        outputs=[dense_layer.output, pool_layer.output],
+        name="dual_feature_extractor"
     )
 
     # 2. Load dataset in class directory order
@@ -88,7 +90,8 @@ def main():
 
     # 3. Accumulate feature embeddings per class
     print("\n[3/4] Extracting embeddings on GPU...")
-    class_sums = np.zeros((num_classes, embedding_dim), dtype=np.float64)
+    dense_sums = np.zeros((num_classes, dense_dim), dtype=np.float64)
+    pool_sums = np.zeros((num_classes, pool_dim), dtype=np.float64)
     class_counts = np.zeros((num_classes,), dtype=np.int64)
 
     t0 = time.time()
@@ -100,50 +103,61 @@ def main():
             batch_labels_np = np.array([reorder_idx[l] for l in batch_labels_np])
 
         # Forward pass on GPU
-        embeddings = feature_extractor(batch_images, training=False).numpy()
+        dense_embs, pool_embs = feature_extractor(batch_images, training=False)
+        dense_embs = dense_embs.numpy()
+        pool_embs = pool_embs.numpy()
 
         # L2-normalize individual embeddings before accumulation
-        norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
-        norms[norms == 0] = 1e-10
-        norm_embeddings = embeddings / norms
+        dense_norms = np.linalg.norm(dense_embs, axis=1, keepdims=True)
+        dense_norms[dense_norms == 0] = 1e-10
+        norm_dense = dense_embs / dense_norms
 
-        for emb, label in zip(norm_embeddings, batch_labels_np):
-            class_sums[label] += emb
+        pool_norms = np.linalg.norm(pool_embs, axis=1, keepdims=True)
+        pool_norms[pool_norms == 0] = 1e-10
+        norm_pool = pool_embs / pool_norms
+
+        for d_emb, p_emb, label in zip(norm_dense, norm_pool, batch_labels_np):
+            dense_sums[label] += d_emb
+            pool_sums[label] += p_emb
             class_counts[label] += 1
             total_images += 1
 
     elapsed = time.time() - t0
-    print(f"Extracted features for {total_images} images in {elapsed:.2f}s ({total_images/elapsed:.1f} img/s)")
+    print(f"Extracted dual features for {total_images} images in {elapsed:.2f}s ({total_images/elapsed:.1f} img/s)")
 
     # 4. Compute and normalize class centroids
     print("\n[4/4] Computing normalized class centroids (prototypes)...")
-    prototypes = np.zeros((num_classes, embedding_dim), dtype=np.float32)
+    dense_prototypes = np.zeros((num_classes, dense_dim), dtype=np.float32)
+    pool_prototypes = np.zeros((num_classes, pool_dim), dtype=np.float32)
 
     for c in range(num_classes):
         if class_counts[c] == 0:
             raise ValueError(f"Class {c} ({class_names[c]}) had 0 images!")
-        centroid = class_sums[c] / class_counts[c]
-        centroid_norm = np.linalg.norm(centroid)
-        if centroid_norm > 0:
-            prototypes[c] = (centroid / centroid_norm).astype(np.float32)
-        else:
-            prototypes[c] = centroid.astype(np.float32)
+        
+        # Dense centroid
+        c_dense = dense_sums[c] / class_counts[c]
+        c_dense_norm = np.linalg.norm(c_dense)
+        dense_prototypes[c] = (c_dense / (c_dense_norm if c_dense_norm > 0 else 1.0)).astype(np.float32)
 
-    # Verify prototype norms
-    proto_norms = np.linalg.norm(prototypes, axis=1)
-    print(f"Prototypes shape: {prototypes.shape}")
-    print(f"Prototypes norm range: [{proto_norms.min():.4f}, {proto_norms.max():.4f}]")
+        # Pool centroid
+        c_pool = pool_sums[c] / class_counts[c]
+        c_pool_norm = np.linalg.norm(c_pool)
+        pool_prototypes[c] = (c_pool / (c_pool_norm if c_pool_norm > 0 else 1.0)).astype(np.float32)
 
-    # Save prototype matrix
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    np.save(str(PROTOTYPES_OUT_PATH), prototypes)
-    print(f"Successfully saved prototype array to: {PROTOTYPES_OUT_PATH} ({PROTOTYPES_OUT_PATH.stat().st_size / 1024:.1f} KB)")
+    np.save(str(PROTOTYPES_OUT_PATH), dense_prototypes)
+    print(f"Saved dense prototypes to: {PROTOTYPES_OUT_PATH}")
+
+    pool_out_path = OUT_DIR / "cifar100_backbone_prototypes.npy"
+    np.save(str(pool_out_path), pool_prototypes)
+    print(f"Saved backbone prototypes to: {pool_out_path}")
 
     # Save metadata
     metadata = {
         "model_architecture": "EfficientNetV2B0",
-        "feature_layer": "dense_512",
-        "embedding_dim": int(embedding_dim),
+        "feature_layers": ["dense_512", "avg_pool"],
+        "dense_dim": int(dense_dim),
+        "backbone_dim": int(pool_dim),
         "num_classes": int(num_classes),
         "total_reference_images": int(total_images),
         "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
@@ -152,7 +166,7 @@ def main():
     }
     with open(METADATA_OUT_PATH, "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2)
-    print(f"Successfully saved metadata to: {METADATA_OUT_PATH}")
+    print(f"Saved metadata to: {METADATA_OUT_PATH}")
     print("=" * 60)
     print("PROTOTYPE GENERATION COMPLETE!")
     print("=" * 60)
