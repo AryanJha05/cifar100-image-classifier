@@ -1,5 +1,5 @@
-# Use Python 3.10 slim image suitable for FastAPI & TensorFlow/Keras
-FROM python:3.10-slim
+# Use Python 3.11 slim image for stable TensorFlow GPU & FastAPI support
+FROM python:3.11-slim
 
 # Prevent Python from writing .pyc files and enable unbuffered logging
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -7,13 +7,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install minimal system dependencies for numerical and image libraries
+# Install minimal system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
+# Install Python dependencies including tensorflow[and-cuda]
 COPY backend/requirements.txt /app/backend/
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r /app/backend/requirements.txt
