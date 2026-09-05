@@ -66,18 +66,6 @@ function initCenteringAndScroll() {
   updateHeaderHeight();
   window.addEventListener('resize', updateHeaderHeight);
 
-  // Dynamic navigation transparency: transparent on hero, frosted on scroll
-  const nav = document.getElementById('main-nav');
-  function handleNavScroll() {
-    if (!nav) return;
-    if (window.scrollY > 30) {
-      nav.classList.add('nav-scrolled');
-    } else {
-      nav.classList.remove('nav-scrolled');
-    }
-  }
-  window.addEventListener('scroll', handleNavScroll, { passive: true });
-  handleNavScroll();
 
   // Intercept Start Classifying buttons: always reset to empty and center upload box
   const ctaButtons = document.querySelectorAll('#hero-cta-btn, a[href="#classifier-section"]');

@@ -211,12 +211,12 @@ body {
   object-position: center 42%;
 }
 
-#main-nav.nav-scrolled {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+#main-nav {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .hero-section-container {
