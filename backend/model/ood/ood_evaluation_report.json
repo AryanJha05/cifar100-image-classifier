@@ -1,0 +1,187 @@
+{
+  "timestamp": "2026-09-05T17:11:47Z",
+  "in_distribution": {
+    "dataset": "CIFAR-100 Test Set",
+    "samples": 1000,
+    "raw_accuracy": 78.3,
+    "sim_percentiles": {
+      "p1": 0.406,
+      "p5": 0.4566,
+      "p10": 0.5023,
+      "p25": 0.5845,
+      "p50_median": 0.6849,
+      "mean": 0.6728
+    },
+    "conf_percentiles": {
+      "p5": 33.65,
+      "p10": 44.91,
+      "p25": 69.03,
+      "p50_median": 95.14,
+      "mean": 82.26
+    }
+  },
+  "out_of_distribution": {
+    "dataset": "Curated OOD Validation Suite",
+    "samples": 19,
+    "individual_evaluations": [
+      {
+        "filename": "color_gradient.png",
+        "category": "abstract_noise",
+        "forced_cifar_class": "cloud",
+        "forced_confidence": 89.19,
+        "feature_similarity": 0.6352,
+        "nearest_prototype_class": "cloud"
+      },
+      {
+        "filename": "gaussian_noise.png",
+        "category": "abstract_noise",
+        "forced_cifar_class": "cloud",
+        "forced_confidence": 70.6,
+        "feature_similarity": 0.5422,
+        "nearest_prototype_class": "cloud"
+      },
+      {
+        "filename": "geometric_grid.png",
+        "category": "abstract_noise",
+        "forced_cifar_class": "worm",
+        "forced_confidence": 44.76,
+        "feature_similarity": 0.4641,
+        "nearest_prototype_class": "worm"
+      },
+      {
+        "filename": "solid_flat_color.png",
+        "category": "abstract_noise",
+        "forced_cifar_class": "cloud",
+        "forced_confidence": 84.96,
+        "feature_similarity": 0.5849,
+        "nearest_prototype_class": "cloud"
+      },
+      {
+        "filename": "code_snippet.png",
+        "category": "documents_text",
+        "forced_cifar_class": "worm",
+        "forced_confidence": 51.35,
+        "feature_similarity": 0.4847,
+        "nearest_prototype_class": "worm"
+      },
+      {
+        "filename": "invoice_document.png",
+        "category": "documents_text",
+        "forced_cifar_class": "worm",
+        "forced_confidence": 64.17,
+        "feature_similarity": 0.529,
+        "nearest_prototype_class": "worm"
+      },
+      {
+        "filename": "receipt_memo.png",
+        "category": "documents_text",
+        "forced_cifar_class": "cloud",
+        "forced_confidence": 67.57,
+        "feature_similarity": 0.5091,
+        "nearest_prototype_class": "worm"
+      },
+      {
+        "filename": "text_page.png",
+        "category": "documents_text",
+        "forced_cifar_class": "cloud",
+        "forced_confidence": 38.41,
+        "feature_similarity": 0.4659,
+        "nearest_prototype_class": "cloud"
+      },
+      {
+        "filename": "circular_emblem.png",
+        "category": "logos_symbols",
+        "forced_cifar_class": "clock",
+        "forced_confidence": 60.63,
+        "feature_similarity": 0.5781,
+        "nearest_prototype_class": "clock"
+      },
+      {
+        "filename": "hex_tech_logo.png",
+        "category": "logos_symbols",
+        "forced_cifar_class": "table",
+        "forced_confidence": 26.66,
+        "feature_similarity": 0.4993,
+        "nearest_prototype_class": "television"
+      },
+      {
+        "filename": "wordmark_logo.png",
+        "category": "logos_symbols",
+        "forced_cifar_class": "worm",
+        "forced_confidence": 17.16,
+        "feature_similarity": 0.4492,
+        "nearest_prototype_class": "worm"
+      },
+      {
+        "filename": "barcode_scan.png",
+        "category": "non_cifar_photos",
+        "forced_cifar_class": "worm",
+        "forced_confidence": 41.78,
+        "feature_similarity": 0.5306,
+        "nearest_prototype_class": "worm"
+      },
+      {
+        "filename": "blueprint_floorplan.png",
+        "category": "non_cifar_photos",
+        "forced_cifar_class": "worm",
+        "forced_confidence": 90.65,
+        "feature_similarity": 0.5728,
+        "nearest_prototype_class": "worm"
+      },
+      {
+        "filename": "circuit_schematic.png",
+        "category": "non_cifar_photos",
+        "forced_cifar_class": "worm",
+        "forced_confidence": 77.97,
+        "feature_similarity": 0.5578,
+        "nearest_prototype_class": "worm"
+      },
+      {
+        "filename": "deep_space_stars.png",
+        "category": "non_cifar_photos",
+        "forced_cifar_class": "shark",
+        "forced_confidence": 35.57,
+        "feature_similarity": 0.4766,
+        "nearest_prototype_class": "cloud"
+      },
+      {
+        "filename": "person_silhouette.png",
+        "category": "non_cifar_photos",
+        "forced_cifar_class": "plate",
+        "forced_confidence": 40.3,
+        "feature_similarity": 0.433,
+        "nearest_prototype_class": "clock"
+      },
+      {
+        "filename": "browser_dashboard.png",
+        "category": "ui_screenshots",
+        "forced_cifar_class": "worm",
+        "forced_confidence": 41.05,
+        "feature_similarity": 0.5218,
+        "nearest_prototype_class": "worm"
+      },
+      {
+        "filename": "dialog_modal.png",
+        "category": "ui_screenshots",
+        "forced_cifar_class": "worm",
+        "forced_confidence": 82.1,
+        "feature_similarity": 0.5545,
+        "nearest_prototype_class": "worm"
+      },
+      {
+        "filename": "settings_panel.png",
+        "category": "ui_screenshots",
+        "forced_cifar_class": "worm",
+        "forced_confidence": 26.75,
+        "feature_similarity": 0.4786,
+        "nearest_prototype_class": "worm"
+      }
+    ]
+  },
+  "recommended_configuration": {
+    "similarity_threshold": 0.55,
+    "confidence_threshold": 35.0,
+    "cifar_acceptance_rate": null,
+    "ood_rejection_rate": null
+  }
+}

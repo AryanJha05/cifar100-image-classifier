@@ -36,7 +36,7 @@
   </script>
 
   <!-- Custom Design Specification CSS -->
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=2.2">
 </head>
 <body class="text-[#0f172a]">
 
@@ -270,6 +270,64 @@
       </div>
 
       <!-- ===================================================================
+           STATE 4B: INVALID / OOD IMAGE REJECTION CARD
+           =================================================================== -->
+      <div class="glass-panel workspace-card p-8 md:p-12 hidden flex flex-col justify-center" id="state-invalid">
+        
+        <div class="flex items-center justify-between pb-6 mb-8 border-b border-slate-900/10">
+          <span class="text-xs font-mono uppercase tracking-widest text-[#0f172a]/60 font-semibold">
+            Inference Complete
+          </span>
+          <span class="px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-900 font-mono text-xs font-medium flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+            Out of Distribution
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
+          
+          <!-- Left: Thumbnail of uploaded image -->
+          <div class="flex flex-col items-center text-center">
+            <div class="w-36 h-36 rounded-2xl bg-white/60 border border-white/50 p-2 shadow-sm flex items-center justify-center mb-4">
+              <img id="invalid-preview-thumb" src="" alt="Rejected image thumbnail" class="max-w-full max-h-full object-contain rounded-lg">
+            </div>
+            <span class="text-xs font-mono uppercase tracking-widest text-[#0f172a]/50 font-semibold">
+              Input Analyzed
+            </span>
+          </div>
+
+          <!-- Right: Clear rejection guidance -->
+          <div class="flex flex-col justify-center text-left">
+            <span class="text-xs font-mono uppercase tracking-widest text-amber-700 font-semibold mb-2">
+              Domain Boundary Notice
+            </span>
+            <h3 class="font-instrument text-3xl md:text-4xl text-[#0f172a] mb-3 leading-tight">
+              Image Not Recognized
+            </h3>
+            <p class="text-sm text-[hsl(215,25%,32%)] leading-relaxed mb-6" id="invalid-message-text">
+              This image does not appear to belong to the CIFAR-100 classes. Please upload an image containing an object from the CIFAR-100 dataset.
+            </p>
+            <div class="p-3.5 rounded-xl bg-white/40 border border-white/50 text-xs font-mono text-[#0f172a]/70">
+              <div class="flex items-start gap-2.5">
+                <iconify-icon icon="lucide:shield-alert" class="text-amber-700 text-base flex-shrink-0 mt-0.5"></iconify-icon>
+                <span>Closed-set safeguard: Predictions are suppressed when visual features fall outside the learned CIFAR-100 manifold.</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Single Primary Action Button -->
+        <div class="mt-8 flex justify-center">
+          <button type="button" class="btn-pill px-10 py-4 text-sm" onclick="resetToEmptyState()">
+            <iconify-icon icon="lucide:refresh-cw" class="text-base"></iconify-icon>
+            <span>Classify Another Image</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- ===================================================================
            STATE 5: ERROR CARD
            =================================================================== -->
       <div class="glass-panel workspace-card p-12 text-center hidden flex flex-col items-center justify-center" id="state-error">
@@ -314,6 +372,6 @@
   </footer>
 
   <!-- Main JavaScript Logic -->
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=2.2"></script>
 </body>
 </html>

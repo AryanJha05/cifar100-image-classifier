@@ -1,18 +1,29 @@
 """
 CIFAR-100 CNN Model Predictor Module
-Centralized model loading, image preprocessing, and inference execution.
+Centralized model loading, image preprocessing, dual-output feature extraction,
+and Out-of-Distribution (OOD) / invalid image rejection.
 Strictly synchronized with the trained ML notebook architecture (EfficientNetV2B0, 96x96 RGB).
 """
 
 import io
 import json
+import logging
 import os
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from PIL import Image
+
+try:
+    from backend import ood_config
+    from backend.ood_detector import get_ood_detector
+except ImportError:
+    import ood_config
+    from ood_detector import get_ood_detector
+
+logger = logging.getLogger("cifar100.predictor")
 
 # ML Model Contract Constants
 IMG_SIZE = 96
@@ -22,7 +33,7 @@ BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = BASE_DIR / "model" / "best_model.keras"
 CLASS_NAMES_PATH = BASE_DIR / "model" / "class_names.json"
 
-_model = None
+_dual_model = None
 _class_names: List[str] = []
 
 
@@ -40,10 +51,15 @@ def load_class_names() -> List[str]:
     return _class_names
 
 
-def get_model():
-    """Lazily load and cache the trained Keras model."""
-    global _model
-    if _model is None:
+def get_dual_model():
+    """
+    Lazily load and cache the trained Keras model as a dual-output model.
+    Outputs:
+      1. Penultimate feature embedding from `dense_512` (shape: [batch, 512])
+      2. Softmax class probability distribution (shape: [batch, 100])
+    """
+    global _dual_model
+    if _dual_model is None:
         if not MODEL_PATH.exists():
             raise FileNotFoundError(
                 f"Trained model artifact 'best_model.keras' not found at {MODEL_PATH}. "
@@ -51,46 +67,111 @@ def get_model():
             )
         import tensorflow as tf
 
-        _model = tf.keras.models.load_model(str(MODEL_PATH))
-    return _model
+        # Configure memory growth for GPU if available
+        gpus = tf.config.list_physical_devices("GPU")
+        if gpus:
+            for gpu in gpus:
+                try:
+                    tf.config.experimental.set_memory_growth(gpu, True)
+                except Exception:
+                    pass
+
+        full_model = tf.keras.models.load_model(str(MODEL_PATH))
+        dense_layer = full_model.get_layer("dense_512")
+        _dual_model = tf.keras.Model(
+            inputs=full_model.inputs,
+            outputs=[dense_layer.output, full_model.output],
+            name="dual_cifar100_inference"
+        )
+        logger.info(f"Loaded dual inference model with feature layer '{dense_layer.name}'")
+    return _dual_model
 
 
-def preprocess_image(image_bytes: bytes) -> np.ndarray:
-    """Preprocess uploaded image bytes to match notebook inference pipeline.
-
+def preprocess_image(image_bytes: bytes) -> Tuple[np.ndarray, Image.Image]:
+    """
+    Preprocess uploaded image bytes to match notebook inference pipeline.
+    - Validate image data via PIL
     - Convert to RGB (3 channels)
     - Resize to 96x96 spatial dimensions
     - Convert to NumPy array
     - Expand dimensions to (1, 96, 96, 3) batch format
     """
-    img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-    img = img.resize((IMG_SIZE, IMG_SIZE))
-    img_array = np.array(img, dtype=np.float32)
+    try:
+        pil_img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    except Exception as e:
+        raise ValueError(f"Could not decode image file: {str(e)}")
+
+    img_resized = pil_img.resize((IMG_SIZE, IMG_SIZE))
+    img_array = np.array(img_resized, dtype=np.float32)
     input_tensor = np.expand_dims(img_array, axis=0)
-    return input_tensor
+    return input_tensor, pil_img
 
 
 def predict_image(image_bytes: bytes) -> Dict[str, Any]:
-    """Run feedforward inference on uploaded image and return top-5 predictions."""
-    class_names = load_class_names()
-    input_tensor = preprocess_image(image_bytes)
+    """
+    Execute end-to-end inference and OOD verification on uploaded image.
 
+    Flow:
+    1. Input validation & spatial variance check (filters flat/blank/corrupt inputs).
+    2. Feedforward pass through dual-output EfficientNetV2B0 model.
+    3. Extract 512-d feature representation & 100-class softmax probabilities.
+    4. Dual-layer OOD check:
+       - Feature-space prototype cosine similarity
+       - Classification confidence
+    5. Returns structured JSON:
+       - If valid: { "valid": true, "predicted_class": ..., "confidence": ..., "top_5": [...] }
+       - If rejected: { "valid": false, "predicted_class": null, "confidence": null, "top_5": [], "message": ... }
+    """
+    class_names = load_class_names()
+    input_tensor, pil_img = preprocess_image(image_bytes)
+
+    # 1. Image Quality / Degeneracy Safeguard:
+    # Reject flat uniform colors, blank screens, or near-zero variance inputs
+    raw_arr = np.array(pil_img, dtype=np.float32)
+    channel_stds = np.std(raw_arr, axis=(0, 1))
+    if np.all(channel_stds < 5.0):
+        logger.info("Rejected degenerate/blank image with near-zero channel variance.")
+        return {
+            "valid": False,
+            "predicted_class": None,
+            "confidence": None,
+            "top_predictions": [],
+            "top_5": [],
+            "message": ood_config.REJECTION_MESSAGE,
+            "model": "EfficientNetV2B0",
+            "classes": NUM_CLASSES,
+            "input_resolution": f"{IMG_SIZE}x{IMG_SIZE} RGB",
+            "inference_time_ms": 0.5,
+            "ood_metrics": {
+                "max_similarity": 0.0,
+                "decision": "rejected",
+                "reason": "Degenerate image: uniform or blank content"
+            }
+        }
+
+    # 2. Dual-Output Forward Pass
     try:
-        model = get_model()
+        dual_model = get_dual_model()
         t0 = time.perf_counter()
-        prediction = model.predict(input_tensor, verbose=0)
+        embeddings, probabilities_batch = dual_model(input_tensor, training=False)
         inference_time_ms = round((time.perf_counter() - t0) * 1000, 1)
+
+        embedding = embeddings.numpy()[0]
+        probabilities = probabilities_batch.numpy()[0]
     except FileNotFoundError as e:
         raise e
     except Exception as e:
         raise RuntimeError(f"Model prediction failed: {str(e)}")
 
-    probabilities = prediction[0]
     predicted_idx = int(np.argmax(probabilities))
     confidence = float(probabilities[predicted_idx] * 100)
 
-    top_5_indices = np.argsort(probabilities)[-5:][::-1]
+    # 3. OOD & Domain Boundary Evaluation
+    detector = get_ood_detector()
+    ood_result = detector.evaluate(embedding, confidence)
 
+    # Top-5 rankings
+    top_5_indices = np.argsort(probabilities)[-5:][::-1]
     top_predictions = [
         {
             "class_name": str(class_names[idx]),
@@ -99,7 +180,38 @@ def predict_image(image_bytes: bytes) -> Dict[str, Any]:
         for idx in top_5_indices
     ]
 
+    # 4. Final Decision Routing
+    if not ood_result["is_valid"]:
+        logger.info(
+            f"OOD Rejected: forced={class_names[predicted_idx]} ({confidence:.1f}%), "
+            f"sim={ood_result['max_similarity']:.3f}, reasons={ood_result['reasons']}"
+        )
+        return {
+            "valid": False,
+            "predicted_class": None,
+            "confidence": None,
+            "top_predictions": [],
+            "top_5": [],
+            "message": ood_config.REJECTION_MESSAGE,
+            "model": "EfficientNetV2B0",
+            "classes": NUM_CLASSES,
+            "input_resolution": f"{IMG_SIZE}x{IMG_SIZE} RGB",
+            "inference_time_ms": inference_time_ms,
+            "ood_metrics": {
+                "max_similarity": ood_result["max_similarity"],
+                "nearest_prototype_class": str(class_names[ood_result["nearest_proto_idx"]]),
+                "decision": "rejected",
+                "reasons": ood_result["reasons"]
+            }
+        }
+
+    # Valid in-distribution sample
+    logger.info(
+        f"Accepted CIFAR-100: class={class_names[predicted_idx]} ({confidence:.1f}%), "
+        f"sim={ood_result['max_similarity']:.3f}"
+    )
     return {
+        "valid": True,
         "predicted_class": str(class_names[predicted_idx]),
         "confidence": round(confidence, 2),
         "top_predictions": top_predictions,
@@ -108,4 +220,9 @@ def predict_image(image_bytes: bytes) -> Dict[str, Any]:
         "classes": NUM_CLASSES,
         "input_resolution": f"{IMG_SIZE}x{IMG_SIZE} RGB",
         "inference_time_ms": inference_time_ms,
+        "ood_metrics": {
+            "max_similarity": ood_result["max_similarity"],
+            "nearest_prototype_class": str(class_names[ood_result["nearest_proto_idx"]]),
+            "decision": "accepted"
+        }
     }
