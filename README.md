@@ -66,39 +66,44 @@ cifar100-image-classifier/
 
 ---
 
-## Quick Start
+## Quick Start with Docker
 
-### 1. Start the Docker Backend
-
-Run from the project root:
-
+### 1. Combined (Both Backend & Frontend)
 ```bash
+# Up
 docker compose up -d
+
+# Down
+docker compose down
+```
+
+---
+
+### 2. Backend Only
+```bash
+# Up
+docker compose up -d backend
+
+# Down
+docker compose stop backend
 ```
 
 - **Backend URL**: [http://localhost:8000](http://localhost:8000)
 - **Interactive Swagger Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
 - **Health Probe**: [http://localhost:8000/health](http://localhost:8000/health)
 
-### 2. Start the Frontend Application
+---
 
-In a separate terminal window:
-
+### 3. Frontend Only
 ```bash
-python3 -m http.server 8080 --directory frontend
+# Up
+docker compose up -d frontend
+
+# Down
+docker compose stop frontend
 ```
 
-Open [http://localhost:8080](http://localhost:8080) in your web browser.
-
-### 3. Stop the Project
-
-```bash
-# Stop Docker backend
-docker compose down
-
-# Stop frontend
-# Press Ctrl + C in the frontend terminal
-```
+- **Frontend URL**: [http://localhost:8080](http://localhost:8080)
 
 ---
 

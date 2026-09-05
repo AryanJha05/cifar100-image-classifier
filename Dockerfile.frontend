@@ -1,0 +1,10 @@
+# Lightweight Nginx image for serving the CIFAR-100 frontend
+FROM nginx:alpine
+
+# Copy static frontend assets into standard Nginx webroot
+COPY frontend/ /usr/share/nginx/html/
+
+# Expose HTTP port
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

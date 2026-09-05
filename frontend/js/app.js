@@ -1,6 +1,6 @@
 /**
  * CIFAR-100 Image Classifier - Client Application
- * Pure Vanilla JavaScript (Zero external UI dependencies)
+ * Minimalist Editorial UI Logic
  * Orchestrates image ingestion, real-time backend health, and inference telemetry.
  */
 
@@ -22,22 +22,6 @@ let currentFile = null;
 let currentImageDataUrl = null;
 let currentImageDims = { width: 96, height: 96 };
 
-// Real sample images residing in frontend/assets/
-const SAMPLE_FILES = {
-  apple: {
-    path: 'assets/sample_apple.png',
-    filename: 'sample_apple.png'
-  },
-  dolphin: {
-    path: 'assets/sample_dolphin.png',
-    filename: 'sample_dolphin.png'
-  },
-  motorcycle: {
-    path: 'assets/sample_motorcycle.png',
-    filename: 'sample_motorcycle.png'
-  }
-};
-
 /* --------------------------------------------------------------------------
    Initialization
    -------------------------------------------------------------------------- */
@@ -55,19 +39,27 @@ document.addEventListener('DOMContentLoaded', () => {
 async function checkBackendHealth() {
   const dot = document.getElementById('backend-status-dot');
   const text = document.getElementById('backend-status-text');
+  const dotMobile = document.getElementById('backend-status-dot-mobile');
+  const textMobile = document.getElementById('backend-status-text-mobile');
 
   try {
     const res = await fetch(`${API_BASE_URL}/health`, { method: 'GET' });
     if (res.ok) {
-      if (dot) dot.className = 'status-dot status-dot-emerald';
-      if (text) text.textContent = 'Backend Online (Port 8000)';
+      if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]';
+      if (text) text.textContent = 'Backend Online';
+      if (dotMobile) dotMobile.className = 'w-1.5 h-1.5 rounded-full bg-emerald-500';
+      if (textMobile) textMobile.textContent = 'Online';
     } else {
-      if (dot) dot.className = 'status-dot status-dot-zinc';
-      if (text) text.textContent = 'Backend Initializing';
+      if (dot) dot.className = 'w-2 h-2 rounded-full bg-zinc-400';
+      if (text) text.textContent = 'Backend Offline';
+      if (dotMobile) dotMobile.className = 'w-1.5 h-1.5 rounded-full bg-zinc-400';
+      if (textMobile) textMobile.textContent = 'Offline';
     }
   } catch (err) {
-    if (dot) dot.className = 'status-dot status-dot-zinc';
+    if (dot) dot.className = 'w-2 h-2 rounded-full bg-zinc-400';
     if (text) text.textContent = 'Backend Offline';
+    if (dotMobile) dotMobile.className = 'w-1.5 h-1.5 rounded-full bg-zinc-400';
+    if (textMobile) textMobile.textContent = 'Offline';
   }
 }
 
@@ -159,26 +151,6 @@ function processUploadedFile(file) {
 }
 
 /* --------------------------------------------------------------------------
-   Real Sample Image Loading (from frontend/assets/)
-   -------------------------------------------------------------------------- */
-async function loadSampleImage(presetKey) {
-  const preset = SAMPLE_FILES[presetKey] || SAMPLE_FILES.apple;
-  
-  try {
-    const res = await fetch(preset.path);
-    if (!res.ok) {
-      throw new Error(`Sample image not found at ${preset.path}`);
-    }
-    const blob = await res.blob();
-    const file = new File([blob], preset.filename, { type: 'image/png' });
-    processUploadedFile(file);
-  } catch (err) {
-    console.warn("Could not stage sample image:", err);
-    showErrorState(`Unable to load sample image: ${err.message}`);
-  }
-}
-
-/* --------------------------------------------------------------------------
    Staged Metadata Updater
    -------------------------------------------------------------------------- */
 function updateStagedMetadata(filename, bytes, dims) {
@@ -215,9 +187,8 @@ function setApplicationState(newState) {
   const stateResult = document.getElementById('state-result');
   const stateError = document.getElementById('state-error');
 
-  // Dynamic Workspace header text
-  const mainTitle = document.getElementById('workspace-main-title');
-  const mainDesc = document.getElementById('workspace-main-desc');
+  // Dynamic Workspace subhead
+  const subhead = document.getElementById('workspace-subhead');
 
   // Hide all cards first
   if (stateEmpty) stateEmpty.classList.add('hidden');
@@ -229,41 +200,60 @@ function setApplicationState(newState) {
   switch (newState) {
     case STATES.EMPTY:
       if (stateEmpty) stateEmpty.classList.remove('hidden');
-      if (mainTitle) mainTitle.textContent = 'Upload an image to begin.';
-      if (mainDesc) mainDesc.textContent = 'The trained model analyzes the image and predicts one of the 100 CIFAR-100 classes.';
+      if (subhead) subhead.textContent = 'Drop your image into the workspace below to run fine-tuned EfficientNetV2B0 model inference.';
       break;
 
     case STATES.SELECTED:
       if (stateSelected) stateSelected.classList.remove('hidden');
-      if (mainTitle) mainTitle.textContent = 'Selected Image';
-      if (mainDesc) mainDesc.textContent = 'Image staged and ready. Click Classify Image to execute EfficientNetV2B0 inference.';
+      if (subhead) subhead.textContent = 'Image staged. Click Classify Image to execute model evaluation.';
       break;
 
     case STATES.LOADING:
       if (stateLoading) stateLoading.classList.remove('hidden');
-      if (mainTitle) mainTitle.textContent = 'Analyzing image...';
-      if (mainDesc) mainDesc.textContent = 'Running EfficientNetV2B0 inference pipeline.';
+      if (subhead) subhead.textContent = 'Inference in progress... Evaluating deep visual features.';
       break;
 
     case STATES.RESULT:
       if (stateResult) stateResult.classList.remove('hidden');
-      if (mainTitle) mainTitle.textContent = 'Prediction';
-      if (mainDesc) mainDesc.textContent = 'Top predictions and classification probabilities generated by fine-tuned EfficientNetV2B0.';
+      if (subhead) subhead.textContent = 'Top predictions and classification probabilities generated by fine-tuned EfficientNetV2B0.';
       break;
 
     case STATES.ERROR:
       if (stateError) stateError.classList.remove('hidden');
-      if (mainTitle) mainTitle.textContent = 'Inference Error';
-      if (mainDesc) mainDesc.textContent = 'Unable to complete image classification.';
+      if (subhead) subhead.textContent = 'An issue occurred during model inference.';
       break;
   }
 }
 
+/**
+ * Completely resets the classifier to the initial empty state.
+ * Clears current image, dimensions, thumbnail, predictions, and form inputs.
+ */
 function resetToEmptyState() {
   currentFile = null;
   currentImageDataUrl = null;
+
   const fileInput = document.getElementById('file-input-el');
   if (fileInput) fileInput.value = '';
+
+  const previewImg = document.getElementById('preview-image-node');
+  if (previewImg) previewImg.src = '';
+
+  const resultThumb = document.getElementById('result-preview-thumb');
+  if (resultThumb) resultThumb.src = '';
+
+  const nameEl = document.getElementById('result-class-name');
+  if (nameEl) nameEl.textContent = '--';
+
+  const confText = document.getElementById('result-confidence-text');
+  if (confText) confText.textContent = '--% Confidence';
+
+  const top5Container = document.getElementById('top5-predictions-container');
+  if (top5Container) top5Container.innerHTML = '';
+
+  const latencyEl = document.getElementById('footer-latency-val');
+  if (latencyEl) latencyEl.textContent = '-- ms';
+
   setApplicationState(STATES.EMPTY);
 }
 
@@ -354,22 +344,23 @@ function renderPredictionResults(result, latencyMs) {
   
   if (top5Container && predictions.length > 0) {
     top5Container.innerHTML = predictions.slice(0, 5).map((item, idx) => {
-      const rankNum = idx + 1;
+      const rankNum = String(idx + 1).padStart(2, '0');
       const className = formatClassName(item.class_name);
       const confNum = Number(item.confidence || 0);
       const barWidth = `${Math.min(100, Math.max(2, confNum))}%`;
       const isTop = idx === 0;
 
       return `
-        <div class="prediction-row ${isTop ? 'top-rank' : ''}">
-          <div class="pred-row-header">
-            <span class="pred-class-label">
-              <span class="pred-rank-num">${rankNum}.</span> ${className}
+        <div class="p-3.5 rounded-xl bg-white/50 border border-white/60 flex flex-col gap-1.5 shadow-sm transition-all hover:bg-white/70">
+          <div class="flex items-center justify-between text-sm">
+            <span class="font-medium text-[#0f172a] flex items-center gap-2">
+              <span class="font-mono text-xs text-[#0f172a]/40">${rankNum}</span>
+              ${className}
             </span>
-            <span class="pred-prob-val">${confNum.toFixed(2)}%</span>
+            <span class="font-mono text-xs font-semibold text-[#0f172a]">${confNum.toFixed(2)}%</span>
           </div>
-          <div class="progress-bar-track">
-            <div class="progress-bar-fill ${isTop ? '' : 'muted'}" style="width: ${barWidth};"></div>
+          <div class="prog-bar-track">
+            <div class="prog-bar-fill ${isTop ? '' : 'muted'}" style="width: ${barWidth};"></div>
           </div>
         </div>
       `;

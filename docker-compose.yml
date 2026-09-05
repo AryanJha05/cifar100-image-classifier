@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: cifar100-backend
     container_name: cifar100_backend
     ports:
       - "8000:8000"
@@ -18,4 +19,16 @@ services:
     environment:
       - PORT=8000
       - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    image: cifar100-frontend
+    container_name: cifar100_frontend
+    ports:
+      - "8080:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
     restart: unless-stopped

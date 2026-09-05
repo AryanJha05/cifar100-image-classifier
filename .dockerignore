@@ -35,8 +35,7 @@ notebook/
 ml/
 .ipynb_checkpoints
 
-# Frontend & Design Assets
-frontend/
+# Design Assets
 design/
 
 # Data & Datasets
