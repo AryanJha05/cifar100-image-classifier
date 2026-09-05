@@ -27,11 +27,122 @@ let currentImageDims = { width: 96, height: 96 };
    -------------------------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', () => {
   initDropzoneEvents();
+  initCenteringAndScroll();
   checkBackendHealth();
   // Poll backend health every 10 seconds
   setInterval(checkBackendHealth, 10000);
   setApplicationState(STATES.EMPTY);
 });
+
+/* --------------------------------------------------------------------------
+   Header Height & Viewport Centering Synchronization
+   -------------------------------------------------------------------------- */
+function updateHeaderHeight() {
+  const nav = document.querySelector('nav');
+  if (nav) {
+    const h = nav.offsetHeight;
+    document.documentElement.style.setProperty('--header-height', `${h}px`);
+  }
+}
+
+function initCenteringAndScroll() {
+  updateHeaderHeight();
+  window.addEventListener('resize', updateHeaderHeight);
+
+  // Intercept Start Classifying buttons for exact viewport centering
+  const ctaButtons = document.querySelectorAll('#hero-cta-btn, a[href="#classifier-section"]');
+  ctaButtons.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      scrollToClassifier(true);
+      if (history.pushState) {
+        history.pushState(null, null, '#classifier-section');
+      }
+    });
+  });
+
+  // Handle direct page load with hash
+  if (window.location.hash === '#classifier-section') {
+    setTimeout(() => scrollToClassifier(false), 50);
+  }
+}
+
+/**
+ * Computes the exact scroll offset to align the active classifier workspace
+ * card's visual center with the center of the available visible viewport
+ * (total viewport height minus fixed navigation header height).
+ */
+function scrollToClassifier(smooth = true) {
+  const section = document.getElementById('classifier-section');
+  if (!section) return;
+
+  const nav = document.querySelector('nav');
+  const headerHeight = nav ? nav.offsetHeight : 72;
+  const activeCard = section.querySelector('.workspace-card:not(.hidden)') || section;
+  const cardRect = activeCard.getBoundingClientRect();
+  const currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
+  const cardAbsoluteTop = currentScrollY + cardRect.top;
+  const cardHeight = cardRect.height;
+  const availableHeight = window.innerHeight - headerHeight;
+
+  let targetScrollY;
+  // If card is taller than available viewport (e.g. mobile or long result card), position top cleanly below header
+  if (cardHeight >= availableHeight - 32) {
+    targetScrollY = cardAbsoluteTop - headerHeight - 16;
+  } else {
+    // Exactly center the card in the visible viewport (between bottom of header and bottom of window)
+    const cardAbsoluteCenter = cardAbsoluteTop + (cardHeight / 2);
+    const viewportAvailableCenter = headerHeight + (availableHeight / 2);
+    targetScrollY = cardAbsoluteCenter - viewportAvailableCenter;
+  }
+
+  targetScrollY = Math.max(0, Math.round(targetScrollY));
+
+  window.scrollTo({
+    top: targetScrollY,
+    behavior: smooth ? 'smooth' : 'auto'
+  });
+}
+
+/**
+ * Gently keeps the active card centered or cleanly positioned below header
+ * during dynamic UI state transitions without abrupt jumping.
+ */
+function ensureCardComfortable(smooth = true) {
+  const section = document.getElementById('classifier-section');
+  if (!section) return;
+
+  const currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
+  // Only adjust if user is already at the classifier section
+  if (currentScrollY < section.offsetTop - (window.innerHeight * 0.4)) {
+    return;
+  }
+
+  requestAnimationFrame(() => {
+    const nav = document.querySelector('nav');
+    const headerHeight = nav ? nav.offsetHeight : 72;
+    const activeCard = section.querySelector('.workspace-card:not(.hidden)');
+    if (!activeCard) return;
+
+    const cardRect = activeCard.getBoundingClientRect();
+    const availableHeight = window.innerHeight - headerHeight;
+    const cardHeight = cardRect.height;
+
+    if (cardHeight >= availableHeight - 32) {
+      if (cardRect.top < headerHeight + 12 || cardRect.top > headerHeight + 60) {
+        const targetScrollY = Math.max(0, Math.round(currentScrollY + cardRect.top - headerHeight - 16));
+        window.scrollTo({ top: targetScrollY, behavior: smooth ? 'smooth' : 'auto' });
+      }
+    } else {
+      const cardCenter = cardRect.top + (cardHeight / 2);
+      const viewportCenter = headerHeight + (availableHeight / 2);
+      if (Math.abs(cardCenter - viewportCenter) > 20) {
+        const targetScrollY = Math.max(0, Math.round(currentScrollY + (cardCenter - viewportCenter)));
+        window.scrollTo({ top: targetScrollY, behavior: smooth ? 'smooth' : 'auto' });
+      }
+    }
+  });
+}
 
 /* --------------------------------------------------------------------------
    Backend Health Verification
@@ -223,6 +334,9 @@ function setApplicationState(newState) {
       if (subhead) subhead.textContent = 'An issue occurred during model inference.';
       break;
   }
+
+  // Preserve smooth viewport positioning across state changes
+  ensureCardComfortable(true);
 }
 
 /**
@@ -255,6 +369,7 @@ function resetToEmptyState() {
   if (latencyEl) latencyEl.textContent = '-- ms';
 
   setApplicationState(STATES.EMPTY);
+  scrollToClassifier(true);
 }
 
 function showErrorState(message) {
