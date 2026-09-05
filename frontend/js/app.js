@@ -22,10 +22,27 @@ let currentFile = null;
 let currentImageDataUrl = null;
 let currentImageDims = { width: 96, height: 96 };
 
+// Ensure the website ALWAYS opens at the top landing/hero section on page load or refresh
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
+window.scrollTo(0, 0);
+
+// Clear any persisting hash so refresh always presents the hero section
+if (window.location.hash) {
+  history.replaceState(null, null, window.location.pathname + window.location.search);
+}
+
+// Ensure scroll position resets to 0 before unload and on pageshow (bfcache)
+window.addEventListener('pageshow', () => {
+  window.scrollTo(0, 0);
+});
+
 /* --------------------------------------------------------------------------
    Initialization
    -------------------------------------------------------------------------- */
 document.addEventListener('DOMContentLoaded', () => {
+  window.scrollTo(0, 0);
   initDropzoneEvents();
   initCenteringAndScroll();
   checkBackendHealth();
@@ -49,22 +66,48 @@ function initCenteringAndScroll() {
   updateHeaderHeight();
   window.addEventListener('resize', updateHeaderHeight);
 
-  // Intercept Start Classifying buttons for exact viewport centering
+  // Intercept Start Classifying buttons: always reset to empty and center upload box
   const ctaButtons = document.querySelectorAll('#hero-cta-btn, a[href="#classifier-section"]');
   ctaButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      scrollToClassifier(true);
-      if (history.pushState) {
-        history.pushState(null, null, '#classifier-section');
-      }
+      resetAndCenterClassifier(true);
     });
   });
+}
 
-  // Handle direct page load with hash
-  if (window.location.hash === '#classifier-section') {
-    setTimeout(() => scrollToClassifier(false), 50);
+/**
+ * Centers the "Drop your image here" upload card visually in the viewport,
+ * accounting for fixed header height.
+ */
+function scrollToEmptyState(smooth = true) {
+  const section = document.getElementById('classifier-section');
+  const emptyCard = document.getElementById('state-empty');
+  if (!section || !emptyCard) return;
+
+  const nav = document.querySelector('nav');
+  const headerHeight = nav ? nav.offsetHeight : 72;
+  const cardRect = emptyCard.getBoundingClientRect();
+  const currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
+  const cardAbsoluteTop = currentScrollY + cardRect.top;
+  const cardHeight = cardRect.height;
+  const availableViewport = window.innerHeight - headerHeight;
+
+  let targetScrollY;
+  if (cardHeight >= availableViewport - 24) {
+    targetScrollY = cardAbsoluteTop - headerHeight - 16;
+  } else {
+    const cardAbsoluteCenter = cardAbsoluteTop + (cardHeight / 2);
+    const viewportAvailableCenter = headerHeight + (availableViewport / 2);
+    targetScrollY = cardAbsoluteCenter - viewportAvailableCenter;
   }
+
+  targetScrollY = Math.max(0, Math.round(targetScrollY));
+
+  window.scrollTo({
+    top: targetScrollY,
+    behavior: smooth ? 'smooth' : 'auto'
+  });
 }
 
 /**
@@ -335,15 +378,20 @@ function setApplicationState(newState) {
       break;
   }
 
-  // Preserve smooth viewport positioning across state changes
-  ensureCardComfortable(true);
+  // Preserve smooth viewport positioning across non-empty state changes
+  if (newState !== STATES.EMPTY) {
+    ensureCardComfortable(true);
+  }
 }
 
 /**
- * Completely resets the classifier to the initial empty state.
- * Clears current image, dimensions, thumbnail, predictions, and form inputs.
+ * Unified reset and center handler:
+ * 1. Resets classifier state, clears image data, results and inputs.
+ * 2. Activates the EMPTY state (upload / drop area).
+ * 3. Smoothly scrolls and centers the "Drop your image here" upload box
+ *    directly in the viewport, taking header height into account.
  */
-function resetToEmptyState() {
+function resetAndCenterClassifier(smooth = true) {
   currentFile = null;
   currentImageDataUrl = null;
 
@@ -369,7 +417,14 @@ function resetToEmptyState() {
   if (latencyEl) latencyEl.textContent = '-- ms';
 
   setApplicationState(STATES.EMPTY);
-  scrollToClassifier(true);
+  scrollToEmptyState(smooth);
+}
+
+/**
+ * Reset to empty state trigger (e.g. from "Classify Another Image" button)
+ */
+function resetToEmptyState() {
+  resetAndCenterClassifier(true);
 }
 
 function showErrorState(message) {
