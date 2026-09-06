@@ -44,3 +44,5 @@ backend/model/*.h5
 notebook/*.keras
 notebook/*.h5
 data/
+backend/tests_ood/
+

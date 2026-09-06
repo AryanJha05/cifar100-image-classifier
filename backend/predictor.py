@@ -34,6 +34,7 @@ MODEL_PATH = BASE_DIR / "model" / "best_model.keras"
 CLASS_NAMES_PATH = BASE_DIR / "model" / "class_names.json"
 
 _inference_model = None
+_classifier_weights: Optional[Tuple[np.ndarray, np.ndarray]] = None
 _class_names: List[str] = []
 
 
@@ -54,13 +55,12 @@ def load_class_names() -> List[str]:
 
 def get_inference_model():
     """
-    Lazily load and cache the trained Keras model with multi-scale outputs.
+    Lazily load and cache the trained Keras model with dual outputs and classification weights.
     Outputs:
       1. Penultimate feature embedding from `dense_512` (shape: [batch, 512])
-      2. Convolutional backbone embedding from `avg_pool` (shape: [batch, 1280])
-      3. Softmax class probability distribution (shape: [batch, 100])
+      2. Softmax class probability distribution (shape: [batch, 100])
     """
-    global _inference_model
+    global _inference_model, _classifier_weights
     if _inference_model is None:
         if not MODEL_PATH.exists():
             raise FileNotFoundError(
@@ -80,15 +80,16 @@ def get_inference_model():
 
         full_model = tf.keras.models.load_model(str(MODEL_PATH))
         dense_layer = full_model.get_layer("dense_512")
-        pool_layer = full_model.get_layer("avg_pool")
+        dense_100 = full_model.get_layer("dense_100_softmax")
+        _classifier_weights = dense_100.get_weights()
         _inference_model = tf.keras.Model(
             inputs=full_model.inputs,
-            outputs=[dense_layer.output, pool_layer.output, full_model.output],
-            name="multi_scale_cifar100_inference"
+            outputs=[dense_layer.output, full_model.output],
+            name="cifar100_inference"
         )
         logger.info(
-            f"Loaded multi-scale inference model with dense layer '{dense_layer.name}' "
-            f"and backbone layer '{pool_layer.name}'"
+            f"Loaded inference model with feature layer '{dense_layer.name}' "
+            f"and classification head '{full_model.output_names}'"
         )
     return _inference_model
 
@@ -115,55 +116,31 @@ def preprocess_image(image_bytes: bytes) -> Tuple[np.ndarray, Image.Image]:
 
 def predict_image(image_bytes: bytes) -> Dict[str, Any]:
     """
-    Execute end-to-end inference and OOD verification on uploaded image.
+    Execute end-to-end inference and collaborative OOD verification on uploaded image.
 
     Flow:
-    1. Input validation & spatial variance check (filters flat/blank/corrupt inputs).
+    1. Decode and preprocess uploaded image (96x96 RGB).
     2. Feedforward pass through dual-output EfficientNetV2B0 model.
-    3. Extract 512-d feature representation & 100-class softmax probabilities.
-    4. Dual-layer OOD check:
-       - Feature-space prototype cosine similarity
-       - Classification confidence
-    5. Returns structured JSON:
-       - If valid: { "valid": true, "predicted_class": ..., "confidence": ..., "top_5": [...] }
-       - If rejected: { "valid": false, "predicted_class": null, "confidence": null, "top_5": [], "message": ... }
+    3. Extract 512-d penultimate features and 100-class softmax probabilities.
+    4. Collaborative OOD decision layer:
+       - Domain sanity checks (blank, noise, synthetic gradients, document/UI canvas)
+       - Feature-space class prototype cosine similarity
+       - Prediction confidence
+    5. Returns structured response:
+       - Valid:   { "valid": true, "predicted_class": ..., "confidence": ..., "top_5": [...] }
+       - Invalid: { "valid": false, "predicted_class": null, "confidence": null, "message": ... }
     """
     class_names = load_class_names()
     input_tensor, pil_img = preprocess_image(image_bytes)
 
-    # 1. Natural Photographic Image Domain & Degeneracy Safeguard:
-    # Reject flat uniform colors, digital UI, app icons, vector logos, and text documents
-    detector = get_ood_detector()
-    domain_ok, domain_reason = detector.evaluate_image_domain(pil_img)
-    if not domain_ok:
-        logger.info(f"OOD Rejected at domain stage: {domain_reason}")
-        return {
-            "valid": False,
-            "predicted_class": None,
-            "confidence": None,
-            "top_predictions": [],
-            "top_5": [],
-            "message": ood_config.REJECTION_MESSAGE,
-            "model": "EfficientNetV2B0",
-            "classes": NUM_CLASSES,
-            "input_resolution": f"{IMG_SIZE}x{IMG_SIZE} RGB",
-            "inference_time_ms": 0.5,
-            "ood_metrics": {
-                "max_similarity": 0.0,
-                "decision": "rejected",
-                "reasons": [domain_reason]
-            }
-        }
-
-    # 2. Multi-Scale Forward Pass
+    # 1. Forward Pass through EfficientNetV2B0
     try:
         model = get_inference_model()
         t0 = time.perf_counter()
-        dense_embs, pool_embs, probabilities_batch = model(input_tensor, training=False)
+        dense_embs, probabilities_batch = model(input_tensor, training=False)
         inference_time_ms = round((time.perf_counter() - t0) * 1000, 1)
 
         dense_emb = dense_embs.numpy()[0]
-        backbone_emb = pool_embs.numpy()[0]
         probabilities = probabilities_batch.numpy()[0]
     except FileNotFoundError as e:
         raise e
@@ -173,12 +150,19 @@ def predict_image(image_bytes: bytes) -> Dict[str, Any]:
     predicted_idx = int(np.argmax(probabilities))
     confidence = float(probabilities[predicted_idx] * 100)
 
-    # 3. Multi-Scale OOD & Domain Boundary Evaluation
+    # Compute raw pre-softmax logits from dense_emb and classification weights
+    logits = None
+    if _classifier_weights is not None:
+        logits = np.dot(dense_emb, _classifier_weights[0]) + _classifier_weights[1]
+
+    # 2. Collaborative Multi-Signal OOD Evaluation
+    detector = get_ood_detector()
     ood_result = detector.evaluate(
         dense_embedding=dense_emb,
         confidence=confidence,
-        backbone_embedding=backbone_emb,
-        pil_img=pil_img
+        predicted_idx=predicted_idx,
+        pil_img=pil_img,
+        logits=logits
     )
 
     # Top-5 rankings
@@ -191,11 +175,11 @@ def predict_image(image_bytes: bytes) -> Dict[str, Any]:
         for idx in top_5_indices
     ]
 
-    # 4. Final Decision Routing
+    # 3. Final Decision Routing
     if not ood_result["is_valid"]:
         logger.info(
             f"OOD Rejected: forced={class_names[predicted_idx]} ({confidence:.1f}%), "
-            f"dense_sim={ood_result['max_similarity']:.3f}, backbone_sim={ood_result.get('backbone_similarity', 0.0):.3f}, "
+            f"sim={ood_result['max_similarity']:.3f}, free_energy={ood_result.get('free_energy', 0.0):.2f}, "
             f"reasons={ood_result['reasons']}"
         )
         return {
@@ -211,7 +195,7 @@ def predict_image(image_bytes: bytes) -> Dict[str, Any]:
             "inference_time_ms": inference_time_ms,
             "ood_metrics": {
                 "max_similarity": ood_result["max_similarity"],
-                "backbone_similarity": ood_result.get("backbone_similarity"),
+                "free_energy": ood_result.get("free_energy", 0.0),
                 "nearest_prototype_class": str(class_names[ood_result["nearest_proto_idx"]]),
                 "decision": "rejected",
                 "reasons": ood_result["reasons"]
@@ -221,7 +205,7 @@ def predict_image(image_bytes: bytes) -> Dict[str, Any]:
     # Valid in-distribution sample
     logger.info(
         f"Accepted CIFAR-100: class={class_names[predicted_idx]} ({confidence:.1f}%), "
-        f"dense_sim={ood_result['max_similarity']:.3f}, backbone_sim={ood_result.get('backbone_similarity', 0.0):.3f}"
+        f"sim={ood_result['max_similarity']:.3f}, free_energy={ood_result.get('free_energy', 0.0):.2f}"
     )
     return {
         "valid": True,
@@ -235,7 +219,7 @@ def predict_image(image_bytes: bytes) -> Dict[str, Any]:
         "inference_time_ms": inference_time_ms,
         "ood_metrics": {
             "max_similarity": ood_result["max_similarity"],
-            "backbone_similarity": ood_result.get("backbone_similarity"),
+            "free_energy": ood_result.get("free_energy", 0.0),
             "nearest_prototype_class": str(class_names[ood_result["nearest_proto_idx"]]),
             "decision": "accepted"
         }
