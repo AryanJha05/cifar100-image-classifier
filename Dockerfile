@@ -25,8 +25,9 @@ ENV LD_LIBRARY_PATH="/usr/local/lib/python3.11/site-packages/nvidia/cublas/lib:/
 # Copy backend application source and model directory
 COPY backend/ /app/backend/
 
-# Expose FastAPI backend port
+# Expose FastAPI backend port (default 8000)
 EXPOSE 8000
 
-# Start Uvicorn server serving backend/app.py
-CMD ["uvicorn", "backend.app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start Uvicorn server respecting environment PORT
+CMD ["sh", "-c", "uvicorn backend.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
+

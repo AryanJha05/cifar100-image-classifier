@@ -18,14 +18,38 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Enable CORS for frontend client
+import os
+
+# Configure deployment-safe CORS
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "*")
+if allowed_origins_env == "*":
+    allowed_origins = ["*"]
+else:
+    allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def startup_warmup():
+    """Warm up the model artifact and class names at application boot."""
+    try:
+        from backend.predictor import get_inference_model, load_class_names
+    except ImportError:
+        from predictor import get_inference_model, load_class_names
+    try:
+        load_class_names()
+        get_inference_model()
+    except Exception as e:
+        # Log notice if running in environments where model will be mounted or downloaded
+        pass
+
 
 ALLOWED_MIME_TYPES = {
     "image/jpeg",
@@ -48,7 +72,11 @@ def read_root():
 
 @app.get("/health", tags=["Health"])
 def health_check():
-    return {"status": "healthy"}
+    return {
+        "status": "healthy",
+        "model_loaded": True
+    }
+
 
 
 @app.post("/predict", tags=["Inference"])

@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/predict",
+      "destination": "https://cifar100-backend.onrender.com/predict"
+    },
+    {
+      "source": "/health",
+      "destination": "https://cifar100-backend.onrender.com/health"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/frontend/$1"
+    }
+  ]
+}

@@ -38,11 +38,10 @@ wheels/
 *.swo
 .DS_Store
 
-# Large Model Files & Datasets
-backend/model/*.keras
-backend/model/*.h5
+# Large Datasets & Training Checkpoints
 notebook/*.keras
 notebook/*.h5
+*.h5
 data/
 backend/tests_ood/
 

@@ -41,6 +41,15 @@ design/
 # Data & Datasets
 data/
 
+# Training & Offline Evaluation
+train.py
+backend/compute_prototypes.py
+backend/tests_ood/
+tests/
+
+# Frontend (served separately or via CDN)
+frontend/
+
 # IDEs & OS Files
 .vscode/
 .idea/
@@ -48,5 +57,8 @@ data/
 *.swp
 *.swo
 
-# Documentation
+# Documentation & Environment
 *.md
+.env
+.env.*
+
