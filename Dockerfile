@@ -25,9 +25,14 @@ ENV LD_LIBRARY_PATH="/usr/local/lib/python3.11/site-packages/nvidia/cublas/lib:/
 # Copy backend application source and model directory
 COPY backend/ /app/backend/
 
-# Expose FastAPI backend port (default 8000)
-EXPOSE 8000
+# Hugging Face Spaces runs with user ID 1000
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
+USER appuser
 
-# Start Uvicorn server respecting environment PORT
-CMD ["sh", "-c", "uvicorn backend.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Expose ports (8000 for standard Docker, 7860 for Hugging Face Spaces)
+EXPOSE 7860 8000
+
+# Start Uvicorn server respecting environment PORT (default 7860 for HF, 8000 for local)
+CMD ["sh", "-c", "uvicorn backend.app:app --host 0.0.0.0 --port ${PORT:-7860}"]
 
