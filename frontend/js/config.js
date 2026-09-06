@@ -9,8 +9,9 @@
  *     window.API_BASE_URL = "https://your-cifar100-backend.onrender.com";
  */
 
-// Production Railway backend URL
+// Production Render backend URL
 window.API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://localhost:8000'
-  : 'https://cifar100-image-classifier-production.up.railway.app';
+  : 'https://cifar100-backend.onrender.com';
+
 
