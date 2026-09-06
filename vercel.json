@@ -4,11 +4,11 @@
   "rewrites": [
     {
       "source": "/predict",
-      "destination": "https://cifar100-backend.onrender.com/predict"
+      "destination": "https://cifar100-image-classifier-production.up.railway.app/predict"
     },
     {
       "source": "/health",
-      "destination": "https://cifar100-backend.onrender.com/health"
+      "destination": "https://cifar100-image-classifier-production.up.railway.app/health"
     },
     {
       "source": "/(.*)",
