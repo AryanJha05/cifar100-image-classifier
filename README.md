@@ -6,7 +6,9 @@ An end-to-end deep learning image classification application trained on the **CI
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3110/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com)
-[![Vercel](https://img.shields.io/badge/Vercel-Frontend-black?logo=vercel)](https://vercel.com)
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-Live%20Demo-black?logo=vercel)](https://cifar100-image-classifier.vercel.app/)
+
+> **Live Application**: [https://cifar100-image-classifier.vercel.app/](https://cifar100-image-classifier.vercel.app/)
 
 ---
 
